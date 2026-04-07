@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Are you thinking in vain?</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f1f3f8;--sf:#fff;--s2:#edf0f7;--bd:#d8deea;--tx:#1a2030;--dm:#60708a;--or:#d05c10;--bl:#1e88cc;--gr:#169858;--pu:#5858c8;--re:#cc3040}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--tx);font-family:"DM Sans",sans-serif;font-size:16px;font-weight:400;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:2rem 1.25rem}
+#app{width:100%;max-width:640px}
+a{color:var(--bl)}a:hover{text-decoration:underline}
+h1{font-size:1.6rem;font-weight:600;line-height:1.2;margin-bottom:.6rem;color:var(--tx)}
+h2{font-size:1.15rem;font-weight:600;margin-bottom:.45rem;color:var(--tx)}
+p{font-size:.96rem;line-height:1.72;color:#566070;margin-bottom:.8rem}p:last-child{margin-bottom:0}
+p b{color:var(--tx);font-weight:500}
+small{font-size:.78rem;color:#8090a8;line-height:1.5}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:1.75rem;margin-bottom:1rem;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.card-sm{background:var(--s2);border-radius:10px;padding:1rem 1.2rem;margin:.75rem 0}
+.btn{background:transparent;border:1.5px solid var(--bd);color:var(--tx);border-radius:9px;padding:.7rem 1.4rem;font-family:"DM Sans",sans-serif;font-size:.9rem;font-weight:500;cursor:pointer;transition:border-color .12s;display:inline-block;text-align:center}
+.btn:hover{border-color:#aab4c8}.btn:disabled{opacity:.25;cursor:default}
+.btn-pri{background:var(--tx);color:#fff;border-color:var(--tx)}.btn-pri:hover{background:var(--tx);border-color:var(--tx)}
+.btn-or{background:var(--or);color:#fff;border-color:var(--or)}.btn-or:hover{background:var(--or);border-color:var(--or)}
+.btn-done{border-color:var(--gr);color:var(--gr)}.btn-done:hover{border-color:var(--gr);color:var(--gr)}
+.btn-row{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1rem}
+.prog{margin-bottom:1.5rem}.prog-bar{height:3px;background:#d8deea;border-radius:2px;margin-bottom:.4rem}
+.prog-fill{height:100%;background:var(--or);border-radius:2px;transition:width .3s}
+.prog-lbl{font-size:.7rem;color:#8090a8;letter-spacing:.08em;text-transform:uppercase}
+.trial-card{background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:2rem;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.t-line{font-size:.97rem;line-height:1.75;color:var(--tx);margin-bottom:.18rem}
+.t-q{font-size:.97rem;line-height:1.75;color:var(--dm);margin:.9rem 0 1.1rem}
+.choices{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap}
+.btn-c{background:transparent;border:1.5px solid var(--bd);color:var(--tx);border-radius:9px;padding:.8rem 1.8rem;font-size:.92rem;font-weight:500;cursor:pointer;transition:border-color .12s;min-width:140px}
+.btn-c:hover{border-color:#aab4c8}
+.db-eye{font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:#8090a8;margin-bottom:.4rem}
+.page-nav{display:flex;align-items:center;justify-content:space-between;margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--bd)}
+.page-step{font-size:.7rem;color:#8090a8;letter-spacing:.07em;text-transform:uppercase}
+.scale-wrap{margin:1.1rem 0 1.5rem;position:relative}
+.scale-bar{height:8px;border-radius:4px;background:linear-gradient(90deg,var(--bl),var(--pu),var(--or))}
+.scale-marker{position:absolute;top:-5px;width:18px;height:18px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 0 0 2px var(--tx);transform:translateX(-50%);transition:left .9s cubic-bezier(.25,.9,.25,1)}
+.scale-tick{position:absolute;top:16px;font-size:.67rem;color:#8090a8;transform:translateX(-50%)}
+.scale-lbls{display:flex;justify-content:space-between;font-size:.67rem;color:#8090a8;margin-top:1.5rem}
+.bar-sec{margin-bottom:1.1rem}.bar-sec-ttl{font-size:.82rem;font-weight:600;color:var(--tx);margin-bottom:.5rem}
+.bar-row{display:flex;align-items:center;gap:.65rem;margin-bottom:.35rem}
+.bar-name{font-size:.84rem;width:92px;flex-shrink:0;color:var(--tx);text-align:right}
+.bar-track{flex:1;height:20px;background:var(--s2);border-radius:4px;overflow:hidden;border:1px solid var(--bd)}
+.bar-fill{height:100%;border-radius:3px;transition:width .9s cubic-bezier(.25,.9,.25,1);width:0}
+.bar-pct{font-size:.8rem;color:var(--dm);width:34px;flex-shrink:0}
+.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 .15rem;font-size:.95rem;font-weight:600;line-height:1.1}
+.frac-d{border-top:1.5px solid currentColor;padding-top:1px;min-width:22px;text-align:center}
+.cv-wrap{background:var(--s2);border-radius:10px;overflow:hidden;margin:.85rem 0;border:1px solid var(--bd)}
+.cv-cap{background:var(--sf);border-top:1px solid var(--bd);padding:.7rem 1rem;font-size:.84rem;color:#566070;line-height:1.65;min-height:52px}
+.cv-cap b{color:var(--tx);font-weight:600}
+.dots{display:flex;gap:.4rem;align-items:center}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--bd);transition:background .2s}.dot.on{background:var(--tx)}
+.ben-row{display:flex;align-items:center;gap:.75rem;margin-bottom:.6rem}
+.ben-lbl{font-size:.83rem;color:var(--dm);width:130px;flex-shrink:0;line-height:1.3}
+.ben-track{flex:1;height:22px;background:var(--s2);border-radius:5px;overflow:hidden;border:1px solid var(--bd)}
+.ben-fill{height:100%;border-radius:5px;display:flex;align-items:center;padding-left:.45rem;font-size:.78rem;font-weight:600;color:#fff;min-width:44px;transition:width 1.2s cubic-bezier(.25,.9,.25,1)}
+.exp-btn{background:none;border:none;font-family:"DM Sans",sans-serif;font-size:.82rem;color:var(--bl);cursor:pointer;padding:0;margin-top:.45rem}
+.exp-body{display:none;font-size:.82rem;color:#566070;line-height:1.7;margin-top:.55rem;padding:.75rem 1rem;background:var(--s2);border-radius:8px}
+.exp-body.open{display:block}
+.cmp-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.6rem;margin-top:.9rem}
+.cmp-cell{background:var(--s2);border-radius:9px;padding:.85rem;text-align:center;border:1px solid var(--bd)}
+.cmp-ttl{font-size:.78rem;font-weight:600;margin-bottom:.5rem}
+.cmp-row{font-size:.8rem;color:var(--dm);margin-bottom:.25rem;display:flex;justify-content:space-between;align-items:center}
+.cmp-bar{height:6px;border-radius:3px;background:var(--bd);overflow:hidden;flex:1;margin-left:.4rem}
+.cmp-bf{height:100%;border-radius:3px;transition:width 1s ease}
+.link-row{display:flex;flex-direction:column;gap:.5rem;margin-top:.8rem}
+.link-item{display:flex;align-items:center;gap:.75rem;padding:.85rem 1.1rem;background:var(--s2);border-radius:9px;font-size:.9rem;color:var(--tx);text-decoration:none;border:1px solid var(--bd);transition:border-color .13s}
+.link-item:hover{border-color:#aab4c8;text-decoration:none}
+.link-item .ar{margin-left:auto;color:#8090a8}
+@media(max-width:420px){.choices{flex-direction:column}.cmp-grid{grid-template-columns:1fr}.bar-name{width:72px}}
+.vas-wrap{margin:1.4rem 0 .5rem;user-select:none}
+.vas-track{position:relative;height:10px;border-radius:5px;background:var(--s2);border:1px solid var(--bd);cursor:pointer;touch-action:none}
+.vas-fill-l{position:absolute;right:50%;top:0;height:100%;border-radius:5px 0 0 5px;background:var(--bl);width:0}
+.vas-fill-r{position:absolute;left:50%;top:0;height:100%;border-radius:0 5px 5px 0;background:var(--or);width:0}
+.vas-thumb{position:absolute;top:50%;width:22px;height:22px;border-radius:50%;background:#fff;border:2.5px solid var(--bd);box-shadow:0 1px 4px rgba(0,0,0,.12);transform:translate(-50%,-50%);left:50%;cursor:grab}
+.vas-thumb.active{cursor:grabbing;border-color:var(--tx)}
+.vas-labels{display:flex;justify-content:space-between;margin-top:.55rem;font-size:.7rem;color:#8090a8;font-style:italic}
+.vas-ticks{display:flex;justify-content:space-between;padding:0 1px;margin-top:.25rem}
+.vas-tick{width:1px;height:4px;background:#c8d0e0}
+.vas-group-labels{display:flex;justify-content:space-between;margin-bottom:.4rem}
+.vas-group-lbl{font-size:.88rem;font-weight:500;color:var(--tx);max-width:44%}
+.vas-group-lbl.right{text-align:right}
+.vas-submit{margin-top:1.1rem;width:100%}
+.ci-bar-wrap{position:relative;height:12px;border-radius:3px;background:var(--s2);border:1px solid var(--bd);margin:.6rem 0}
+.ci-bar-fill{position:absolute;height:100%;border-radius:3px;opacity:.3}
+.ci-bar-mark{position:absolute;top:50%;width:3px;border-radius:2px;height:78%;transform:translate(-50%,-50%)}
+</style>
+</head><body><div id="app"></div><script>
+
+const TD=[
+  {g1:"nurse",g2:"politician",adj:"kind",ls:1.030,n1:50,n2:950,lb:-2.944},
+  {g1:"boxer",g2:"librarian",adj:"muscular",ls:2.104,n1:50,n2:950,lb:-2.944},
+  {g1:"lawyer",g2:"gardener",adj:"argumentative",ls:1.848,n1:100,n2:900,lb:-2.197},
+  {g1:"politician",g2:"nurse",adj:"dishonest",ls:2.065,n1:100,n2:900,lb:-2.197},
+  {g1:"librarian",g2:"boxer",adj:"gentle",ls:1.372,n1:150,n2:850,lb:-1.735},
+  {g1:"computer programmer",g2:"chef",adj:"nerdy",ls:1.711,n1:150,n2:850,lb:-1.735},
+  {g1:"artist",g2:"accountant",adj:"imaginative",ls:1.357,n1:200,n2:800,lb:-1.386},
+  {g1:"kindergarten teacher",g2:"boxer",adj:"jovial",ls:1.496,n1:250,n2:750,lb:-1.099},
+  {g1:"environmental activist",g2:"accountant",adj:"idealistic",ls:1.552,n1:300,n2:700,lb:-0.847},
+  {g1:"actor",g2:"librarian",adj:"charismatic",ls:1.257,n1:300,n2:700,lb:-0.847},
+  {g1:"hippy",g2:"accountant",adj:"creative",ls:1.050,n1:350,n2:650,lb:-0.619},
+  {g1:"psychologist",g2:"engineer",adj:"empathetic",ls:0.923,n1:350,n2:650,lb:-0.619},
+  {g1:"nurse",g2:"lawyer",adj:"warm",ls:1.347,n1:400,n2:600,lb:-0.405},
+  {g1:"engineer",g2:"psychologist",adj:"shy",ls:1.267,n1:400,n2:600,lb:-0.405},
+  {g1:"politician",g2:"nurse",adj:"selfish",ls:1.925,n1:900,n2:100,lb:2.197},
+  {g1:"lawyer",g2:"gardener",adj:"arrogant",ls:1.781,n1:850,n2:150,lb:1.735},
+  {g1:"accountant",g2:"artist",adj:"organized",ls:0.878,n1:850,n2:150,lb:1.735},
+  {g1:"artist",g2:"accountant",adj:"unconventional",ls:1.560,n1:800,n2:200,lb:1.386},
+  {g1:"businessman",g2:"hippy",adj:"ambitious",ls:1.463,n1:700,n2:300,lb:0.847},
+  {g1:"politician",g2:"accountant",adj:"persuasive",ls:0.991,n1:750,n2:250,lb:1.099}
+];
+const SELECTED_ITEMS=[1,3,6,8,9,10,14,16];
+let S={scr:"welcome",trials:[],idx:0,resp:[],wEst:0.5,wCI:{lo:0.05,hi:0.95},dbp:0,bStep:0};
+let A={ddmStep:0,ddmId:null,ddmDone:false,
+       confId:null,confDone:false,confS:0,
+       exStep:0,
+       trStep:0,trId:null,trDone:{b:false,bay:false,par:false},
+       paths:{b:[],bay:[],par:[]},parDrift:0,parG1:"",parG2:"",parAdj:""};
+let _smooth=[],_noisy=[];
+let confHi=[],confLo=[];
+let trDrawn={b:0,bay:0,par:0};
+const shuf=a=>{const b=[...a];for(let i=b.length-1;i>0;i--){const j=0|Math.random()*(i+1);[b[i],b[j]]=[b[j],b[i]]}return b};
+const sig=x=>1/(1+Math.exp(-x));
+const $=id=>document.getElementById(id);
+const art=w=>/^[aeiou]/i.test(w.trim())?"an":"a";
+// Joint MAP estimator: choice + VAS confidence magnitude
+// Slider position in [-1,+1]; sign = choice, |pos| = confidence
+// Confidence likelihood: Normal(|v|*SCALE/3, SIGMA) on |slider|
+const VAS_SCALE=1.2,VAS_SIGMA=0.25;
+function estWFull(rs){
+  if(rs.length<1)return{w:0.5,lo:0.05,hi:0.95};
+  const priorA=3,priorB=3,NG=500;
+  const grid=new Float64Array(NG+1);
+  let maxLL=-Infinity;
+  for(let wi=0;wi<=NG;wi++){
+    const w=wi/NG;
+    let ll=rs.reduce((s,r)=>{
+      const v=w*r.ls+(1-w)*r.lb,p=Math.max(1e-9,Math.min(1-1e-9,sig(v)));
+      let lll=r.c?Math.log(p):Math.log(1-p);
+      if(r.conf!=null){
+        const mu=Math.abs(v)*VAS_SCALE/3,diff=Math.abs(r.conf)-mu;
+        lll+=-0.5*(diff/VAS_SIGMA)**2-Math.log(VAS_SIGMA*2.5066);
+      }
+      return s+lll;
+    },0);
+    if(0<w&&w<1)ll+=(priorA-1)*Math.log(w)+(priorB-1)*Math.log(1-w);
+    grid[wi]=ll;
+    if(ll>maxLL)maxLL=ll;
+  }
+  // Normalise to get posterior, find MAP and 80% CI
+  let sum=0;
+  for(let i=0;i<=NG;i++){grid[i]=Math.exp(grid[i]-maxLL);sum+=grid[i];}
+  let cumul=0,lo10=-1,hi90=-1,mapW=0,mapV=-Infinity;
+  for(let i=0;i<=NG;i++){
+    if(grid[i]>mapV){mapV=grid[i];mapW=i/NG;}
+    cumul+=grid[i]/sum;
+    if(lo10<0&&cumul>=0.10)lo10=i/NG;
+    if(hi90<0&&cumul>=0.90)hi90=i/NG;
+  }
+  return{w:mapW,lo:lo10<0?0:lo10,hi:hi90<0?1:hi90};
+}
+function estW(rs){return estWFull(rs).w;}
+function benefitSim(w,tr){
+  // Simulate over ALL conflict items in the full item bank for robustness.
+  // P(correct | drift v, boundary a) ≈ sigmoid(v_correct * a)
+  const allConflict=TD.filter(t=>Math.sign(t.ls)!==Math.sign(t.lb));
+  let lo=0,hi=0;
+  for(const t of allConflict){
+    const bayV=0.5*t.ls+0.5*t.lb;
+    const biasV=w*t.ls+(1-w)*t.lb;
+    const correct=bayV>0?1:-1;
+    const v=biasV*correct;
+    lo+=sig(v*2);
+    hi+=sig(v*14);
+  }
+  return{lo:Math.round(lo/allConflict.length*100),hi:Math.round(hi/allConflict.length*100)}
+}
+function sRNG(seed){let s=seed>>>0;return()=>{s=(s*1664525+1013904223)>>>0;return s/0xffffffff}}
+function mkPath(drift,bnd,seed,dt,sg,mx){dt=dt||0.009;sg=sg||0.18;mx=mx||3500;const rng=sRNG(seed),p=[0];let x=0;for(let i=0;i<mx;i++){x+=drift*dt+sg*Math.sqrt(dt)*(rng()*2-1)*1.732;p.push(x);if(Math.abs(x)>=bnd)break}return p}
+function mkSmooth(drift,bnd,flat,dt){flat=flat||30;dt=dt||0.009;const p=[];for(let i=0;i<flat;i++)p.push(0);let x=0;for(let i=0;i<4000;i++){x+=drift*dt;p.push(x);if(x>=bnd)break}return p}
+function mkFlat(drift,bnd,seed,flat){flat=flat||30;return[...new Array(flat).fill(0),...mkPath(drift,bnd,seed)]}
+function mkFixed(drift,steps,seed,dt,sg){dt=dt||0.012;sg=sg||0.13;const rng=sRNG(seed),p=[0];let x=0;for(let i=0;i<steps;i++){x+=drift*dt+sg*Math.sqrt(dt)*(rng()*2-1)*1.732;p.push(x)}return p}
+
+function render(){$("app").innerHTML=({welcome:rWelcome,instructions:rInst,trial:rTrial,debrief:rDB}[S.scr]||rWelcome)();bind();if(S.scr==="debrief")setTimeout(afterRender,80)}
+const navBar=n=>`<div class="page-nav"><span class="page-step">${n+1} / 9</span><button class="btn btn-pri" id="btn-next">Continue &rarr;</button></div>`;
+function rWelcome(){return`<div style="padding-top:1.5rem"><h1 style="font-size:2rem;margin-bottom:.35rem">Are you thinking in vain?</h1><p style="font-size:1.05rem;color:var(--dm);margin-bottom:2rem">An interactive demonstration</p><div class="card"><p style="margin-top:.25rem">You will complete <b>8 short reasoning problems</b>. Your responses are used to estimate your reasoning profile on the fly. Afterward, we walk through the normative computation, a model of how you combined the available information, and what this tells us about deliberation and bias.</p><p>This demonstration illustrates the main findings of our recent work: <b>Thinking in Vain: A Mechanistic Account of Biased Evidence Accumulation in Reasoning</b> (Beucler, Purcell, Charles, De Neys &amp; Desender).</p><p style="font-style:italic;color:#8090a8;margin-top:.3rem">Built with Claude.</p></div><div class="btn-row"><button class="btn btn-pri" id="btn-start">Start &rarr;</button></div></div>`}
+function rInst(){return`<div><div class="db-eye">Instructions</div><h1>How it works</h1><div class="card" style="margin-top:.75rem"><p>Each problem describes a fictional study with two groups. You'll see how many people are in each group and a one-word description of a randomly selected individual.</p><p><b>Your task:</b> drag the slider toward the group you think the individual most likely belongs to. Drag further if you're confident, stay near center if you're unsure.</p><div class="card-sm" style="text-align:center"><div class="t-line">This study contains lawyers and nurses.</div><div class="t-line">Person 'A' is kind.</div><div class="t-line">There are 995 lawyers and 5 nurses.</div><div style="margin-top:.9rem"><div style="display:flex;justify-content:space-between;font-size:.82rem;font-weight:500;color:var(--tx);margin-bottom:.35rem"><span>a lawyer</span><span>a nurse</span></div><div style="position:relative;height:10px;border-radius:5px;background:var(--s2);border:1px solid var(--bd)"><div style="position:absolute;top:50%;left:72%;width:22px;height:22px;border-radius:50%;background:#fff;border:2.5px solid var(--tx);transform:translate(-50%,-50%)"></div></div><div style="display:flex;justify-content:space-between;font-size:.68rem;color:#8090a8;margin-top:.4rem;font-style:italic"><span>certain</span><span>uncertain</span><span>certain</span></div></div></div></div><div class="btn-row"><button class="btn btn-pri" id="btn-inst">Begin &rarr;</button></div></div>`}
+function rTrial(){const t=S.trials[S.idx],flip=t.flip,lg=flip?t.g2:t.g1,rg=flip?t.g1:t.g2,L=String.fromCharCode(65+S.idx);
+return`<div><div class="prog"><div class="prog-bar"><div class="prog-fill" style="width:${Math.round(S.idx/8*100)}%"></div></div><div class="prog-lbl">Problem ${S.idx+1} of 8</div></div><div class="trial-card"><div class="t-line">This study contains ${t.g1}s and ${t.g2}s.</div><div class="t-line">Person '${L}' is ${t.adj}.</div><div class="t-line">There are ${t.n1.toLocaleString()} ${t.g1}s and ${t.n2.toLocaleString()} ${t.g2}s.</div><div class="t-q" style="margin-bottom:.5rem">Which group does Person '${L}' most likely belong to?</div>
+<div class="vas-wrap" id="vas-wrap">
+  <div class="vas-group-labels"><span class="vas-group-lbl">${art(lg)} ${lg}</span><span class="vas-group-lbl right">${art(rg)} ${rg}</span></div>
+  <div class="vas-track" id="vas-track"><div class="vas-fill-l" id="vas-fl"></div><div class="vas-fill-r" id="vas-fr"></div><div class="vas-thumb" id="vas-thumb"></div></div>
+  <div class="vas-ticks">${Array(9).fill('<div class="vas-tick"></div>').join("")}</div>
+  <div class="vas-labels"><span>certain</span><span>uncertain</span><span>certain</span></div>
+</div>
+<button class="btn btn-pri vas-submit" id="vas-submit">Confirm &rarr;</button>
+</div></div>`}
+function rDB(){return[rDB0,rDB1,rDB2,rDB3,rDB4,rDB5,rDB6,rDB7,rDB8][S.dbp]()}
+
+// DB0: Context
+function rDB0(){return`<div><h1>Context and objectives</h1>
+<div class="card" style="margin-top:.75rem"><h2>Base-rate neglect</h2><p style="margin-top:.4rem">People tend to underweight base-rate information when forming probabilistic judgments — a robust reasoning bias with important implications in medicine, law, and many other decision domains (Kahneman &amp; Tversky, 1974).</p></div>
+<div class="card" style="border-left:3px solid var(--or)"><h2>Modeling biased reasoning</h2><p style="margin-top:.4rem">We use base-rate neglect as an example to formally model what happens when people reason in a biased way. A model that jointly explains choices, response times, and confidence allows us to address questions such as:</p>
+<ul style="margin:.6rem 0 .6rem 1.2rem;color:#566070;font-size:.95rem;line-height:1.9">
+<li>Why are biased people <b>confidently wrong</b>, fast and certain even when the base-rate should dominate?</li>
+<li>Why are they <b>thinking in vain</b>, deliberating longer without correcting their response?</li>
+</ul>
+<p>The answer lies in the structure of the evidence signal itself, and how much weight each person places on each source of information.</p></div>
+${navBar(S.dbp)}</div>`}
+
+// DB1: Normative computation
+function rDB1(){const s=S.bStep;return`<div><div class="db-eye">Part 1</div><h1>What is the statistically correct answer?</h1><p style="margin-top:.5rem">Every problem has a normatively correct answer, obtained by combining base-rate information and stereotype information using Bayes' theorem.</p><div class="card"><div class="card-sm" style="text-align:center;font-size:.95rem;line-height:1.85;color:var(--tx)">This study contains boxers and librarians.<br>Person 'A' is muscular.<br>There are 10 boxers and 990 librarians.<br><span style="color:var(--dm)">Is Person 'A' more likely to be a boxer or a librarian?</span></div>
+<div class="bar-sec" style="margin-top:1.1rem;opacity:${s>=1?1:.15};transition:opacity .5s"><div class="bar-sec-ttl">1. Base-rate information (group composition)</div><div class="bar-row"><div class="bar-name">Boxer</div><div class="bar-track"><div class="bar-fill" id="bf0" style="background:var(--or)"></div></div><div class="bar-pct">1%</div></div><div class="bar-row"><div class="bar-name">Librarian</div><div class="bar-track"><div class="bar-fill" id="bf1" style="background:var(--bl)"></div></div><div class="bar-pct">99%</div></div><small>990 out of 1000 people in this study are librarians.</small></div>
+<div class="bar-sec" style="opacity:${s>=2?1:.15};transition:opacity .5s"><div class="bar-sec-ttl">2. Stereotype information &mdash; typicality of "muscular" <span style="font-weight:400;color:#8090a8">(score 0&ndash;100)</span></div><div class="bar-row"><div class="bar-name">Boxer</div><div class="bar-track"><div class="bar-fill" id="bf2" style="background:var(--or)"></div></div><div class="bar-pct">92</div></div><div class="bar-row"><div class="bar-name">Librarian</div><div class="bar-track"><div class="bar-fill" id="bf3" style="background:var(--bl)"></div></div><div class="bar-pct">11</div></div><small>Typicality scores estimated by GPT-4, validated against human ratings (baserater; Beucler et al., 2026).</small></div>
+<div class="bar-sec" style="opacity:${s>=3?1:.15};transition:opacity .5s"><div class="bar-sec-ttl">3. Correct answer &mdash; combining both (Bayes' theorem)</div><div class="bar-row"><div class="bar-name">Boxer</div><div class="bar-track"><div class="bar-fill" id="bf4" style="background:var(--or)"></div></div><div class="bar-pct">8%</div></div><div class="bar-row"><div class="bar-name">Librarian</div><div class="bar-track"><div class="bar-fill" id="bf5" style="background:var(--bl)"></div></div><div class="bar-pct">92%</div></div><small>Despite "muscular" strongly suggesting a boxer, it is <b style="color:var(--tx)">more likely that Person A is a librarian</b> (92%). Most people say boxer.</small></div>
+<div class="btn-row">${s<1?`<button class="btn btn-or" id="b-s0">Show base-rate information &rarr;</button>`:s===1?`<button class="btn btn-or" id="b-s1">Show stereotype information &rarr;</button>`:s===2?`<button class="btn btn-or" id="b-s2">Show correct answer &rarr;</button>`:""}</div></div>
+${s>=3?navBar(S.dbp):""}</div>`}
+
+// DB2: Your result
+function rDB2(){const w=S.wEst,wp=Math.round(w*100),ci=S.wCI,lop=Math.round(ci.lo*100),hip=Math.round(ci.hi*100);
+const cat=w>=0.7?"stereotype-dominant":w>=0.3?"balanced":"base-rate-dominant";
+const col=cat==="stereotype-dominant"?"var(--or)":cat==="balanced"?"var(--pu)":"var(--bl)";
+const colHex=cat==="stereotype-dominant"?"#d05c10":cat==="balanced"?"#5858c8":"#1e88cc";
+const catLabel=cat==="stereotype-dominant"?"Stereotype-dominant":cat==="balanced"?"Balanced":"Base-rate dominant";
+const ciSpan=ci.hi-ci.lo;
+const catUncertain=ciSpan>0.55;
+const desc=cat==="stereotype-dominant"?`Your choices were predominantly driven by stereotype information. Base-rate information had relatively little influence, even on strong conflict problems — a pattern consistent with the majority of participants in our study.`:
+cat==="balanced"?`Your choices show sensitivity to both sources of information. You neither strongly relied on the stereotype nor systematically followed the base-rate — the pattern closest to genuine Bayesian integration.`:
+`Your choices were predominantly driven by base-rate information. Stereotype information had relatively little influence — the mirror image of the typical pattern, but still a heuristic rather than true integration of both signals.`;
+const nC=S.resp.filter(r=>Math.sign(S.trials[r.i].ls)!==Math.sign(S.trials[r.i].lb)).length,nSC=S.resp.filter(r=>{const t=S.trials[r.i];return Math.sign(t.ls)!==Math.sign(t.lb)&&r.c}).length;
+return`<div><div class="db-eye">Part 2</div><h1>How you weighted the evidence</h1>
+<div class="card" style="margin-top:.75rem">
+  <div style="text-align:center;margin-bottom:1.2rem">
+    <div style="font-size:1.45rem;font-weight:600;color:${col};margin-bottom:.1rem">${catLabel}${catUncertain?' <span style="font-size:.82rem;font-weight:400;color:#8090a8">(uncertain)</span>':''}</div>
+    <div style="font-size:.72rem;color:#8090a8;text-transform:uppercase;letter-spacing:.08em">estimated stereotype weight (w)</div>
+  </div>
+  <!-- Scale with CI and marker overlaid -->
+  <div style="position:relative;padding:0 0 1.8rem">
+    <!-- gradient bar -->
+    <div class="scale-bar" style="height:10px;border-radius:5px"></div>
+    <!-- CI band overlaid on gradient -->
+    <div style="position:absolute;top:0;left:${lop}%;width:${hip-lop}%;height:10px;background:rgba(255,255,255,.45);border-radius:3px;border:1.5px solid rgba(255,255,255,.8)"></div>
+    <!-- MAP marker -->
+    <div style="position:absolute;top:-5px;left:${wp}%;width:4px;height:20px;background:#fff;border-radius:2px;transform:translateX(-50%);box-shadow:0 0 0 1.5px ${colHex}"></div>
+    <!-- Three labels -->
+    <div style="position:absolute;top:14px;left:0;font-size:.68rem;color:#8090a8;white-space:nowrap">base-rate only</div>
+    <div style="position:absolute;top:14px;left:50%;transform:translateX(-50%);font-size:.68rem;color:#8090a8;white-space:nowrap">Bayesian</div>
+    <div style="position:absolute;top:14px;right:0;font-size:.68rem;color:#8090a8;white-space:nowrap">stereotype only</div>
+  </div>
+  <!-- w and CI summary -->
+  <div style="display:flex;justify-content:center;gap:1.2rem;align-items:baseline;padding:.5rem .8rem;background:var(--s2);border-radius:8px;font-size:.88rem">
+    <span>w = <b style="color:${col};font-size:1.1rem">${w.toFixed(2)}</b></span>
+    <span style="color:#8090a8;font-size:.78rem">80% CI [${ci.lo.toFixed(2)}&thinsp;&ndash;&thinsp;${ci.hi.toFixed(2)}]</span>
+  </div>
+</div>
+<div class="card"><p>${desc}</p><p>In our full study (N = 151), the majority of participants placed very high weight on stereotype information (median w &asymp; 0.95), often near-ignoring the base-rate.</p></div>
+<div class="card" style="border-left:3px solid var(--bd)"><p style="font-size:.84rem;color:#566070;margin:0"><b style="color:var(--tx)">Note:</b> The 80% CI reflects the estimation uncertainty from using only 8 reasoning problems. In the paper, w is fitted jointly to ~240 trials of choices, response times, and confidence ratings, yielding a much tighter estimate. <i>Sorry if you were misclassified!</i></p><button class="exp-btn" id="exp-btn" style="margin-top:.55rem">How was w estimated?</button><div class="exp-body" id="exp-body"><p style="font-size:.82rem;color:#566070;margin-bottom:.5rem">Stereotype evidence per trial: log(<span class="frac" style="font-size:.78rem;font-weight:400"><span class="frac-n">typicality<sub>g1</sub></span><span class="frac-d">typicality<sub>g2</sub></span></span>) from GPT-4 ratings. Base-rate evidence: log(<span class="frac" style="font-size:.78rem;font-weight:400"><span class="frac-n">n<sub>g1</sub></span><span class="frac-d">n<sub>g2</sub></span></span>). We estimate w by maximizing the joint log-likelihood of choices (logistic model) and slider positions (Gaussian confidence model) with a weak Beta(3,3) prior. The 80% CI is the highest-density interval of the resulting posterior.</p></div></div>
+${navBar(S.dbp)}</div>`}
+
+// DB3: DDM
+const DCAP=["Starting point (<i>z</i>): encodes pre-existing response tendencies such as motor biases. In our study we place it at the midpoint between the two boundaries.","Boundary (<i>a</i>): a decision is made when accumulated evidence crosses one boundary. The separation <i>a</i> determines how much evidence is required before responding.","Non-decision time (t\u2080): before accumulation begins, time is spent encoding the stimulus and preparing the motor response. In the model, t\u2080 is added to the decision time to give the full RT.","Drift rate (<i>v</i>): the average direction and strength of evidence accumulation. In our model, v is a weighted combination of base-rate information and stereotype information. Higher |v| means faster, more consistent decisions.","Noise: accumulation fluctuates around v due to moment-to-moment variability. When it crosses a boundary, the RT is recorded."];
+function rDB3(){return`<div><div class="db-eye">Part 3</div><h1>How decisions form</h1><p style="margin-top:.5rem">The drift-diffusion model (DDM) was originally developed for perceptual and memory decisions. It describes decisions as the noisy accumulation of evidence over time toward one of two response boundaries. We adapt it here to biased reasoning to access the dynamics of the decision in a precise, mechanistic way.</p><div class="cv-wrap"><canvas id="ddm-cv" width="600" height="275" style="width:100%;display:block"></canvas><div class="cv-cap" id="ddm-cap">Click <b>Next</b> to introduce each component step by step.</div></div><div style="display:flex;align-items:center;gap:.7rem;margin-top:.15rem;flex-wrap:wrap"><button class="btn btn-or" id="ddm-nx">Next &rarr;</button><button class="btn" id="ddm-rs">Reset</button><div class="dots" id="ddm-dots">${[0,1,2,3,4].map(i=>`<div class="dot" id="dd${i}"></div>`).join("")}</div></div><div id="ddm-nav-ph">${A.ddmDone?navBar(S.dbp):""}</div></div>`}
+
+// DB4: Confidence
+const CSTEPS=175;
+function rDB4(){return`<div><div class="db-eye">Part 3b</div><h1>How can we model (biased) confidence?</h1><p style="margin-top:.5rem">Once a response is made, when a boundary is crossed, post-decision evidence accumulation can be used to model confidence (Pleskac &amp; Busemeyer, 2010), especially when it is reported after a response was made, as in our experiment. Accumulation continues briefly after the decision. How far evidence moves from the boundary determines confidence.</p><div class="cv-wrap"><canvas id="conf-cv" width="600" height="275" style="width:100%;display:block"></canvas><div class="cv-cap" id="conf-cap"></div></div><div style="display:flex;gap:.7rem;flex-wrap:wrap;margin-top:.15rem"><button class="btn btn-or" id="conf-play">&#9654; Play</button><button class="btn" id="conf-rs">Reset</button></div><div id="conf-nav-ph">${A.confDone?navBar(S.dbp):""}</div></div>`}
+
+// DB5: From words to numbers
+function rDB5(){const s=A.exStep,dB=+(0.95*2.104+0.05*(-2.944)).toFixed(2),dBay=+(0.5*2.104+0.5*(-2.944)).toFixed(2);return`<div><div class="db-eye">Part 4</div><h1>From words to numbers</h1><p style="margin-top:.5rem">Each problem provides two sources of information that can be quantified and fed into the model as evidence.</p><div class="card"><div style="text-align:center;font-size:.97rem;line-height:1.85;color:var(--tx);margin-bottom:.9rem">This study contains boxers and librarians.<br>Person 'A' is <span id="hl-adj" style="border-radius:3px;padding:0 3px;transition:background .4s,color .4s;${s>=2?"background:#fde8d8;color:var(--or)":""}">muscular</span>.<br>There are <span id="hl-n" style="border-radius:3px;padding:0 3px;transition:background .4s,color .4s;${s>=1?"background:#d8eef8;color:var(--bl)":""}">50 boxers</span> and <span id="hl-p" style="border-radius:3px;padding:0 3px;transition:background .4s,color .4s;${s>=1?"background:#d8eef8;color:var(--bl)":""}">950 librarians</span>.</div>
+<div style="opacity:${s>=1?1:.2};transition:opacity .5s"><div class="card-sm" style="border-left:3px solid var(--bl)"><div style="font-size:.78rem;font-weight:600;color:var(--bl);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.35rem">Base-rate information &rarr; evidence</div><div style="display:flex;align-items:center;gap:.5rem;font-size:1rem;font-weight:600">log<span class="frac"><span class="frac-n">50</span><span class="frac-d">950</span></span>= &minus;2.94<span style="font-size:.82rem;font-weight:400;color:var(--dm);margin-left:.3rem">&rarr; strongly favors librarian</span></div></div></div>
+<div style="opacity:${s>=2?1:.2};transition:opacity .5s;margin-top:.2rem"><div class="card-sm" style="border-left:3px solid var(--or)"><div style="font-size:.78rem;font-weight:600;color:var(--or);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.35rem">Stereotype information &rarr; evidence</div><div style="display:flex;align-items:center;gap:.5rem;font-size:1rem;font-weight:600">log<span class="frac"><span class="frac-n">92</span><span class="frac-d">11</span></span>= +2.13<span style="font-size:.82rem;font-weight:400;color:var(--dm);margin-left:.3rem">&rarr; strongly favors boxer</span></div><small>Typicality: 92/100 for boxers, 11/100 for librarians.</small></div></div>
+<div style="opacity:${s>=3?1:.2};transition:opacity .5s;margin-top:.2rem"><div class="card-sm" style="border-left:3px solid var(--tx)"><div style="font-size:.82rem;font-weight:600;margin-bottom:.6rem">Drift rate: v = w &times; stereotype evidence + (1&minus;w) &times; base-rate evidence</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem"><div style="background:rgba(208,92,16,.07);border-radius:7px;padding:.7rem;border:1px solid rgba(208,92,16,.2)"><div style="font-size:.75rem;font-weight:600;color:var(--or);margin-bottom:.3rem">Biased reasoner (w = 0.95)</div><div style="font-size:.85rem">0.95 &times; (+2.13) + 0.05 &times; (&minus;2.94)</div><div style="font-size:1.05rem;font-weight:600;margin-top:.2rem">v = +${dB}</div><small>Pulls toward boxer &mdash; wrong direction.</small></div><div style="background:rgba(30,136,204,.07);border-radius:7px;padding:.7rem;border:1px solid rgba(30,136,204,.2)"><div style="font-size:.75rem;font-weight:600;color:var(--bl);margin-bottom:.3rem">Bayesian reasoner (w = 0.50)</div><div style="font-size:.85rem">0.50 &times; (+2.13) + 0.50 &times; (&minus;2.94)</div><div style="font-size:1.05rem;font-weight:600;margin-top:.2rem">v = ${dBay}</div><small>Pulls toward librarian &mdash; correct direction.</small></div></div></div></div>
+<div class="btn-row">${s<1?`<button class="btn btn-or" id="ex1">Extract base-rate &rarr;</button>`:s===1?`<button class="btn btn-or" id="ex2">Extract stereotype &rarr;</button>`:s===2?`<button class="btn btn-or" id="ex3">Compute drift rates &rarr;</button>`:""}</div></div>
+${s>=3?navBar(S.dbp):""}</div>`}
+
+// DB6: Trajectories
+function rDB6(){const w=S.wEst,ts=A.trStep,dP=A.parDrift;return`<div><div class="db-eye">Part 5</div><h1>What does the model predict?</h1><p style="margin-top:.5rem">Applying the model to simulate reasoning on a conflict trial: 50 boxers and 950 librarians, Person A is muscular. Three drift rates from three different evidence-weighting strategies.</p><div class="cv-wrap"><canvas id="tr-cv" width="600" height="270" style="width:100%;display:block"></canvas><div class="cv-cap" id="tr-cap">Click a button below to add each trajectory.</div></div><div class="btn-row"><button class="btn" id="tr-b">1. Biased reasoner (w = 0.95, v = +1.85)</button><button class="btn" id="tr-bay" disabled>2. Bayesian reasoner (w = 0.50, v = &minus;0.42)</button><button class="btn" id="tr-par" disabled>3. Your trajectory (w = ${w.toFixed(2)})</button></div>
+<div id="cmp-wrap" style="opacity:${ts>=3?1:0};transition:opacity .6s;margin-top:1rem"><div class="cmp-grid"><div class="cmp-cell"><div class="cmp-ttl" style="color:var(--or)">Biased</div><div class="cmp-row">RT <div class="cmp-bar"><div class="cmp-bf" id="cmp-rt-b" style="width:0%"></div></div></div><div class="cmp-row">Confidence <div class="cmp-bar"><div class="cmp-bf" id="cmp-cf-b" style="width:0%"></div></div></div><small style="display:block;margin-top:.4rem">Fast &middot; High confidence &middot; Wrong (nurse)</small></div><div class="cmp-cell"><div class="cmp-ttl" style="color:var(--bl)">Bayesian</div><div class="cmp-row">RT <div class="cmp-bar"><div class="cmp-bf" id="cmp-rt-bay" style="width:0%"></div></div></div><div class="cmp-row">Confidence <div class="cmp-bar"><div class="cmp-bf" id="cmp-cf-bay" style="width:0%"></div></div></div><small style="display:block;margin-top:.4rem">Slow &middot; Low confidence &middot; Correct (politician)</small></div><div class="cmp-cell"><div class="cmp-ttl" style="color:var(--pu)">You</div><div class="cmp-row">RT <div class="cmp-bar"><div class="cmp-bf" id="cmp-rt-par" style="width:0%"></div></div></div><div class="cmp-row">Confidence <div class="cmp-bar"><div class="cmp-bf" id="cmp-cf-par" style="width:0%"></div></div></div><small style="display:block;margin-top:.4rem">w = ${w.toFixed(2)}</small></div></div></div>
+<div id="tr-nav-ph">${ts>=3?navBar(S.dbp):""}</div></div>`}
+
+// DB7: Deliberation
+function rDB7(){const w=S.wEst;
+const catTxt=w>=0.7?`With a <b>stereotype-dominant</b> profile like yours (w&thinsp;=&thinsp;${w.toFixed(2)}), deliberating longer is likely to have little effect on accuracy — and may even worsen it. Accumulating more of a distorted evidence signal mainly reinforces the wrong answer. Effective debiasing would likely require changing how you weight the evidence, not just slowing down.`:
+w>=0.3?`With a <b>balanced</b> profile like yours (w&thinsp;=&thinsp;${w.toFixed(2)}), deliberating longer is likely to help. With weighting close to the Bayesian optimum, more evidence averaging reduces noise in the right direction.`:
+`With a <b>base-rate dominant</b> profile like yours (w&thinsp;=&thinsp;${w.toFixed(2)}), deliberating longer is also likely to have limited benefit — the evidence signal is distorted at its source, just in the opposite direction. Effective integration would likely require giving more weight to the stereotype as well.`;
+return`<div><div class="db-eye">Part 6</div><h1>The limits of deliberation</h1><p style="margin-top:.5rem">More cautious and deliberate responses can be achieved by raising the decision boundary (a), making responses slower. For a Bayesian reasoner this improves performance, because more evidence averaging reduces noise. For a biased reasoner, it mainly extends the accumulation of a distorted evidence signal — and can even worsen performance.</p>
+<div class="cv-wrap"><canvas id="del-cv" width="520" height="290" style="width:100%;display:block"></canvas><div class="cv-cap" id="del-cap" style="font-size:.82rem">Predicted accuracy on conflict trials as a function of decision boundary (a).</div></div>
+<div style="display:flex;gap:.7rem;flex-wrap:wrap;margin-top:.15rem"><button class="btn btn-or" id="del-play">&#9654; Show my curve (w&nbsp;=&nbsp;${w.toFixed(2)})</button></div>
+<div class="card" id="del-debrief" style="margin-top:.8rem;display:none"><p style="font-size:.83rem;margin-bottom:.5rem">${catTxt}</p></div>${navBar(S.dbp)}</div>`}
+
+// DB8: Read more
+function rDB8(){return`<div><div class="db-eye">Part 7</div><h1>Read more</h1><p style="margin-top:.5rem"><b>Thinking in Vain: A Mechanistic Account of Biased Evidence Accumulation in Reasoning</b><br>Beucler, Purcell, Charles, De Neys &amp; Desender</p><div class="link-row"><a class="link-item" href="https://osf.io/preprints/psyarxiv/ze2ku" target="_blank"><span>Preprint (PsyArXiv)</span><span class="ar">&#8599;</span></a><a class="link-item" href="https://link.springer.com/article/10.3758/s13428-025-02923-9" target="_blank"><span>Using large language models to estimate belief strength in reasoning (Behavior Research Methods)</span><span class="ar">&#8599;</span></a><a class="link-item" href="https://cran.r-project.org/package=baserater" target="_blank"><span>baserater R package (CRAN)</span><span class="ar">&#8599;</span></a></div><p style="margin-top:1.2rem;font-size:.85rem;color:var(--dm)">Contact: <a href="mailto:jeremie.beucler@gmail.com">jeremie.beucler@gmail.com</a></p><div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1rem"><button class="btn" id="btn-share">Copy result to share</button><button class="btn" id="btn-restart">Start over</button></div></div>`}
+
+function bind(){
+  $("btn-start")?.addEventListener("click",()=>{S.scr="instructions";render()});
+  $("btn-inst")?.addEventListener("click",()=>{S.trials=shuf(SELECTED_ITEMS.map(i=>TD[i])).map(t=>({...t,flip:Math.random()>.5}));S.scr="trial";S.idx=0;render()});
+  $("btn-next")?.addEventListener("click",advDB);
+  $("btn-restart")?.addEventListener("click",fullReset);
+  $("btn-share")?.addEventListener("click",()=>{
+    const w=S.wEst;
+    const cat=w>=0.7?"Stereotype-dominant":w>=0.3?"Balanced":"Base-rate dominant";
+    const desc=w>=0.7?"My choices were driven mostly by stereotypes, with little influence of base-rate information.":
+      w>=0.3?"My choices showed sensitivity to both stereotype and base-rate information.":
+      "My choices were driven mostly by base-rate information, with little influence of stereotypes.";
+    navigator.clipboard?.writeText(
+      "I tried the 'Are you thinking in vain?' reasoning demo.\n\n"+
+      "Reasoning profile: "+cat+" (stereotype weight w\u202f=\u202f"+w.toFixed(2)+")\n"+
+      desc+"\n\n"+
+      "Try it: osf.io/preprints/psyarxiv/ze2ku"
+    );
+    $("btn-share").textContent="Copied!";
+  });
+  // VAS slider
+  (function(){
+    const track=$("vas-track"),thumb=$("vas-thumb"),fl=$("vas-fl"),fr=$("vas-fr"),btn=$("vas-submit");
+    if(!track)return;
+    let dragging=false,pos=0; // pos in [-1,+1], 0=center
+    function setPos(p){
+      pos=Math.max(-1,Math.min(1,p));
+      const pct=(pos+1)/2*100;
+      thumb.style.left=pct+"%";
+      const half=Math.abs(pos)/2*100;
+      if(pos<0){fl.style.width=half+"%";fr.style.width="0%"}
+      else{fr.style.width=half+"%";fl.style.width="0%"}
+    }
+    function evtX(e){return e.touches?e.touches[0].clientX:e.clientX}
+    function onMove(e){
+      if(!dragging)return;e.preventDefault();
+      const r=track.getBoundingClientRect();
+      setPos(((evtX(e)-r.left)/r.width)*2-1);
+    }
+    track.addEventListener("mousedown",e=>{dragging=true;thumb.classList.add("active");onMove(e)});
+    track.addEventListener("touchstart",e=>{dragging=true;thumb.classList.add("active");onMove(e)},{passive:false});
+    document.addEventListener("mousemove",onMove);
+    document.addEventListener("touchmove",onMove,{passive:false});
+    function onUp(){dragging=false;thumb.classList.remove("active")}
+    document.addEventListener("mouseup",onUp);document.addEventListener("touchend",onUp);
+    btn.addEventListener("click",()=>{
+      const t=S.trials[S.idx],flip=t.flip;
+      // left side = lg = flip?g2:g1; pos<0 means chose left = lg
+      const choseLg=pos<0;
+      const cG1=flip?!choseLg:choseLg; // chose g1?
+      const conf=pos; // signed: negative=left choice, positive=right choice
+      const res={i:S.idx,ls:t.ls,lb:t.lb,c:cG1,conf:conf};
+      S.resp.push(res);
+      const est=estWFull(S.resp);S.wEst=est.w;S.wCI={lo:est.lo,hi:est.hi};
+      S.idx++;
+      if(S.idx>=8){S.scr="debrief";S.dbp=0;render()}else render();
+    });
+  })();
+  $("exp-btn")?.addEventListener("click",()=>{const b=$("exp-body"),o=b.classList.toggle("open");$("exp-btn").textContent=o?"Hide":"How is w estimated?"});
+  $("b-s0")?.addEventListener("click",()=>{S.bStep=1;render()});
+  $("b-s1")?.addEventListener("click",()=>{S.bStep=2;render()});
+  $("b-s2")?.addEventListener("click",()=>{S.bStep=3;render()});
+  $("ddm-nx")?.addEventListener("click",ddmNext);
+  $("ddm-rs")?.addEventListener("click",ddmReset);
+  $("conf-play")?.addEventListener("click",confPlay);
+  $("conf-rs")?.addEventListener("click",confReset);
+  $("ex1")?.addEventListener("click",()=>{A.exStep=1;render()});
+  $("ex2")?.addEventListener("click",()=>{A.exStep=2;render()});
+  $("ex3")?.addEventListener("click",()=>{A.exStep=3;render()});
+  $("tr-b")?.addEventListener("click",()=>trPlay("b"));
+  $("tr-bay")?.addEventListener("click",()=>trPlay("bay"));
+  $("tr-par")?.addEventListener("click",()=>trPlay("par"));
+}
+function fullReset(){
+  S={scr:"welcome",trials:[],idx:0,resp:[],wEst:0.5,wCI:{lo:0.05,hi:0.95},dbp:0,bStep:0};
+  A={ddmStep:0,ddmId:null,ddmDone:false,confId:null,confDone:false,confS:0,exStep:0,trStep:0,trId:null,trDone:{b:false,bay:false,par:false},paths:{b:[],bay:[],par:[]},parDrift:0,parG1:"",parG2:"",parAdj:""};
+  _smooth=[];_noisy=[];confHi=[];confLo=[];trDrawn={b:0,bay:0,par:0};render()
+}
+function advDB(){
+  if(A.ddmId){cancelAnimationFrame(A.ddmId);A.ddmId=null}
+  if(A.confId){cancelAnimationFrame(A.confId);A.confId=null}
+  if(A.trId){cancelAnimationFrame(A.trId);A.trId=null}
+  S.dbp++;
+  A.exStep=0;A.trStep=0;A.ddmStep=0;A.ddmDone=false;A.confId=null;A.confDone=false;A.confS=0;
+  _smooth=[];_noisy=[];confHi=[];confLo=[];trDrawn={b:0,bay:0,par:0};A.paths={b:[],bay:[],par:[]};
+  render()
+}
+function afterRender(){
+  const p=S.dbp;
+  if(p===1)setTimeout(initBars,80);
+  if(p===2){/* CI scale rendered statically */}
+  if(p===3){pregenDDM();const cv=$("ddm-cv");if(cv){drawDDMState(cv,0,0,0);updateDDMUI()}}
+  if(p===4){const cv=$("conf-cv");if(cv)drawConfBase(cv)}
+  if(p===6){pregenTR();const cv=$("tr-cv");if(cv)drawTRBase(cv)}
+  if(p===7)setTimeout(()=>{drawDelCurves(false);animBenBars()},100)
+}
+function initBars(){
+  const set=(id,pct)=>{const e=$(id);if(e)e.style.width=pct+"%"};
+  if(S.bStep>=1){set("bf0",1);set("bf1",99)}
+  if(S.bStep>=2){set("bf2",92);set("bf3",11)}
+  if(S.bStep>=3){set("bf4",8);set("bf5",92)}
+}
+
+// ── DDM CANVAS ────────────────────────────────────────────────────────────
+function pregenDDM(){
+  if(!_smooth.length)_smooth=mkSmooth(0.5,1.0,30,0.009);
+  if(!_noisy.length)_noisy=mkFlat(0.5,1.0,42,30)
+}
+function ddmLayout(){return{ml:58,mr:22,mt:54,mb:38,bnd:1.0,flat:30}}
+function drawDDMBase(cv){
+  const ctx=cv.getContext("2d"),W=cv.width,H=cv.height;
+  const{ml,mr,mt,mb}=ddmLayout(),iw=W-ml-mr,ih=H-mt-mb;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle="#eceff6";ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle="#b0bcd0";ctx.lineWidth=1.2;
+  ctx.beginPath();ctx.moveTo(ml,mt);ctx.lineTo(ml,mt+ih);ctx.lineTo(ml+iw,mt+ih);ctx.stroke();
+  ctx.fillStyle="#7a8aa0";ctx.font="11px DM Sans,sans-serif";ctx.textAlign="center";
+  ctx.fillText("Time",ml+iw/2,H-3);
+  ctx.save();ctx.translate(14,mt+ih/2);ctx.rotate(-Math.PI/2);ctx.fillText("Evidence",0,0);ctx.restore();
+  cv._ml=ml;cv._mr=mr;cv._mt=mt;cv._mb=mb;cv._iw=iw;cv._ih=ih
+}
+function drawDDMState(cv,step,sS,sN){
+  drawDDMBase(cv);
+  const ctx=cv.getContext("2d"),{ml:ml,mt:mt,iw:iw,ih:ih}={ml:cv._ml,mt:cv._mt,iw:cv._iw,ih:cv._ih};
+  const{bnd,flat}=ddmLayout();
+  const toY=v=>mt+ih/2-v*(ih/2)/bnd;
+  const maxL=Math.max(_smooth.length,_noisy.length,400);
+  const toX=s=>ml+s/maxL*iw;
+  const spX=ml+4,spY=toY(0),byU=toY(bnd),byL=toY(-bnd);
+  // step>=1: SP
+  if(step>=1){
+    ctx.beginPath();ctx.arc(spX,spY,7,0,Math.PI*2);ctx.fillStyle="#1a2030";ctx.fill();
+    ctx.font="600 11px DM Sans,sans-serif";ctx.fillStyle="#1a2030";ctx.textAlign="left";
+    ctx.fillText("z",spX+12,spY-6);
+    ctx.strokeStyle="rgba(0,0,0,.06)";ctx.lineWidth=.8;
+    ctx.beginPath();ctx.moveTo(ml,spY);ctx.lineTo(ml+iw,spY);ctx.stroke()
+  }
+  // step>=2: boundaries
+  if(step>=2){
+    [[byU,"rgba(208,92,16,.55)","Response A"],[byL,"rgba(30,136,204,.55)","Response B"]].forEach(([y,c,lbl])=>{
+      ctx.strokeStyle=c;ctx.lineWidth=1.5;ctx.setLineDash([5,5]);
+      ctx.beginPath();ctx.moveTo(ml,y);ctx.lineTo(ml+iw,y);ctx.stroke();ctx.setLineDash([]);
+      ctx.font="600 10px DM Sans,sans-serif";ctx.fillStyle=c.replace(".55","1");ctx.textAlign="left";
+      ctx.fillText(lbl,ml+4,y+(y===byU?-6:14))
+    });
+    // 'a' bracket
+    ctx.fillStyle="rgba(42,48,80,.55)";ctx.font="11px DM Sans,sans-serif";ctx.textAlign="left";
+    ctx.fillText("a",ml+iw+5,toY(bnd)+8);
+    ctx.strokeStyle="rgba(42,48,80,.35)";ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(ml+iw+14,byU+3);ctx.lineTo(ml+iw+14,byL-3);ctx.stroke();
+    [byU+3,byL-3].forEach(y=>{ctx.beginPath();ctx.moveTo(ml+iw+11,y);ctx.lineTo(ml+iw+17,y);ctx.stroke()})
+  }
+  // step>=3: t0 annotation (static)
+  if(step>=3){
+    const t0X=toX(flat),annY=spY+32;
+    ctx.strokeStyle="rgba(80,100,130,.45)";ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(spX,annY);ctx.lineTo(t0X,annY);ctx.stroke();
+    [spX,t0X].forEach(x=>{ctx.beginPath();ctx.moveTo(x,annY-3);ctx.lineTo(x,annY+3);ctx.stroke()});
+    ctx.font="600 10px DM Sans,sans-serif";ctx.fillStyle="rgba(60,80,110,.8)";ctx.textAlign="center";
+    ctx.fillText("t\u2080",(spX+t0X)/2,annY+13)
+  }
+  // step>=4: smooth drift (animated by sS)
+  if(step>=4&&sS>0){
+    const ns=Math.min(sS,_smooth.length);
+    ctx.strokeStyle="rgba(208,92,16,.8)";ctx.lineWidth=2.5;ctx.setLineDash([]);
+    ctx.beginPath();ctx.moveTo(spX,spY);
+    for(let i=1;i<ns;i++){const x=toX(i),y=toY(Math.max(-bnd,Math.min(bnd,_smooth[i])));ctx.lineTo(x,y)}
+    ctx.stroke();
+    if(sS>70){
+      const qi=Math.min(ns-1,Math.round(ns*.4)),qx=toX(qi),qy=toY(Math.max(-bnd,Math.min(bnd,_smooth[qi])));
+      ctx.beginPath();ctx.moveTo(qx,qy);ctx.lineTo(qx,qy-22);ctx.strokeStyle="rgba(208,92,16,.55)";ctx.lineWidth=1.2;ctx.stroke();
+      ctx.beginPath();ctx.moveTo(qx-3,qy-19);ctx.lineTo(qx,qy-24);ctx.lineTo(qx+3,qy-19);ctx.fillStyle="rgba(208,92,16,.55)";ctx.fill();
+      ctx.font="600 10px DM Sans,sans-serif";ctx.fillStyle="rgba(208,92,16,.9)";ctx.textAlign="left";ctx.fillText("v > 0",qx+4,qy-24)
+    }
+  }
+  // step>=5: noisy trajectory (animated by sN)
+  if(step>=5&&sN>0){
+    // ghost of smooth
+    if(_smooth.length>0){
+      ctx.strokeStyle="rgba(208,92,16,.15)";ctx.lineWidth=2;ctx.setLineDash([3,4]);
+      ctx.beginPath();ctx.moveTo(spX,spY);
+      for(let i=1;i<Math.min(_smooth.length,sN);i++){ctx.lineTo(toX(i),toY(Math.max(-bnd,Math.min(bnd,_smooth[i]))))}
+      ctx.stroke();ctx.setLineDash([])
+    }
+    const nn=Math.min(sN,_noisy.length);
+    ctx.strokeStyle="rgba(208,92,16,.9)";ctx.lineWidth=2.2;ctx.setLineDash([]);
+    ctx.beginPath();ctx.moveTo(spX,spY);
+    for(let i=1;i<nn;i++){ctx.lineTo(toX(i),toY(Math.max(-bnd,Math.min(bnd,_noisy[i]))))}
+    ctx.stroke();
+    if(sN>=_noisy.length){
+      const last=_noisy[_noisy.length-1],rx=toX(_noisy.length-1),ry=toY(Math.max(-bnd,Math.min(bnd,last)));
+      ctx.beginPath();ctx.arc(rx,ry,6,0,Math.PI*2);ctx.fillStyle="#d05c10";ctx.fill();
+      ctx.strokeStyle="#fff";ctx.lineWidth=1.5;ctx.stroke();
+      ctx.font="600 10px DM Sans,sans-serif";ctx.fillStyle="#d05c10";ctx.textAlign="left";ctx.fillText("RT",rx+8,ry-3);
+      // decision time bracket
+      const t0X=toX(flat),annY=ry+(ry>spY?14:-24);
+      ctx.strokeStyle="rgba(208,92,16,.45)";ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(t0X,annY);ctx.lineTo(rx,annY);ctx.stroke();
+      [t0X,rx].forEach(x=>{ctx.beginPath();ctx.moveTo(x,annY-3);ctx.lineTo(x,annY+3);ctx.stroke()});
+      ctx.fillStyle="rgba(208,92,16,.75)";ctx.textAlign="center";ctx.fillText("decision time",(t0X+rx)/2,annY+(ry>spY?12:-6));
+      ctx.font="600 10px DM Sans,sans-serif";ctx.fillStyle="rgba(40,55,80,.65)";
+      ctx.fillText("RT = t\u2080 + decision time",ml+iw/2,toY(-bnd)+22)
+    }
+  }
+}
+let ddmA={sS:0,sN:0};
+function ddmNext(){
+  if(A.ddmId){cancelAnimationFrame(A.ddmId);A.ddmId=null}
+  const cv=$("ddm-cv");if(!cv)return;
+  A.ddmStep=Math.min(A.ddmStep+1,5);updateDDMUI();
+  ddmA={sS:0,sN:0};const sp=2;
+  if(A.ddmStep<=2){// steps 1 and 2 are static
+    drawDDMState(cv,A.ddmStep,0,0)
+  } else if(A.ddmStep===3){// t0: static
+    drawDDMState(cv,3,0,0)
+  } else if(A.ddmStep===4){// smooth drift animated
+    const go=()=>{ddmA.sS=Math.min(ddmA.sS+sp,_smooth.length);drawDDMState(cv,4,ddmA.sS,0);if(ddmA.sS<_smooth.length)A.ddmId=requestAnimationFrame(go);else updateDDMUI()};
+    requestAnimationFrame(go)
+  } else if(A.ddmStep===5){// noisy animated
+    const go=()=>{ddmA.sN=Math.min(ddmA.sN+sp,_noisy.length);drawDDMState(cv,5,_smooth.length,ddmA.sN);if(ddmA.sN<_noisy.length)A.ddmId=requestAnimationFrame(go);else{A.ddmDone=true;updateDDMUI();const ph=$("ddm-nav-ph");if(ph){ph.innerHTML=navBar(S.dbp);bind()}}};
+    requestAnimationFrame(go)
+  }
+}
+function ddmReset(){
+  if(A.ddmId){cancelAnimationFrame(A.ddmId);A.ddmId=null}
+  A.ddmStep=0;A.ddmDone=false;ddmA={sS:0,sN:0};
+  const cv=$("ddm-cv");if(cv)drawDDMState(cv,0,0,0);
+  updateDDMUI()
+}
+function updateDDMUI(){
+  const s=A.ddmStep,cap=$("ddm-cap");
+  if(cap)cap.innerHTML=s===0?"Click <b>Next</b> to introduce each component step by step.":"<b>Step "+s+"/5:</b> "+DCAP[s-1];
+  [0,1,2,3,4].forEach(i=>{const d=$("dd"+i);if(d)d.className="dot"+(i<s?" on":"")});
+  const nx=$("ddm-nx");if(nx)nx.disabled=A.ddmStep>=5
+}
+
+// ── CONFIDENCE CANVAS ─────────────────────────────────────────────────────
+function drawConfBase(cv){
+  const ctx=cv.getContext("2d"),W=cv.width,H=cv.height;
+  const ml=52,mr=16,mt=22,mb=52,iw=W-ml-mr,ih=H-mt-mb;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle="#eceff6";ctx.fillRect(0,0,W,H);
+  const decY=mt+ih/2,pathW=iw*0.58;
+  ctx.fillStyle="rgba(22,152,88,.06)";ctx.fillRect(ml,mt,iw,decY-mt);
+  ctx.fillStyle="rgba(204,48,64,.06)";ctx.fillRect(ml,decY,iw,ih);
+  ctx.strokeStyle="rgba(208,92,16,.55)";ctx.lineWidth=1.8;ctx.setLineDash([5,5]);
+  ctx.beginPath();ctx.moveTo(ml,decY);ctx.lineTo(ml+iw,decY);ctx.stroke();ctx.setLineDash([]);
+  ctx.font="600 10px DM Sans,sans-serif";ctx.fillStyle="rgba(208,92,16,.88)";ctx.textAlign="center";
+  ctx.fillText("Chosen response boundary",ml+iw*0.35,decY-5);
+  // Rotated zone labels on right side
+  const rZoneX = ml + pathW + (iw - pathW) / 2;
+
+  // High confidence region
+  ctx.save();
+  ctx.translate(rZoneX, decY - (decY - mt) / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.font = "600 10px DM Sans,sans-serif";
+  ctx.fillStyle = "rgba(22,152,88,.75)";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("High confidence", 0, -6);
+  ctx.fillText("region", 0, 6);
+  ctx.restore();
+
+  // Low confidence region
+  ctx.save();
+  ctx.translate(rZoneX, decY + (mt + ih - decY) / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.font = "600 10px DM Sans,sans-serif";
+  ctx.fillStyle = "rgba(204,48,64,.7)";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("Low confidence", 0, -6);
+  ctx.fillText("region", 0, 6);
+  ctx.restore();
+  // tau annotation
+  const tauY=mt+ih+12;
+  ctx.strokeStyle="rgba(60,80,110,.45)";ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(ml,tauY);ctx.lineTo(ml+pathW,tauY);ctx.stroke();
+  [ml,ml+pathW].forEach(x=>{ctx.beginPath();ctx.moveTo(x,tauY-3);ctx.lineTo(x,tauY+3);ctx.stroke()});
+  ctx.font="italic 600 12px DM Sans,sans-serif";ctx.fillStyle="rgba(60,80,110,.8)";ctx.textAlign="center";
+  ctx.fillText("\u03c4",(ml+ml+pathW)/2,tauY+14);
+  ctx.font="10px DM Sans,sans-serif";ctx.fillStyle="rgba(60,80,110,.55)";
+  ctx.fillText("post-decision accumulation time",(ml+ml+pathW)/2,tauY+28);
+  ctx.strokeStyle="#b0bcd0";ctx.lineWidth=1.2;ctx.setLineDash([]);
+  ctx.beginPath();ctx.moveTo(ml,mt);ctx.lineTo(ml,mt+ih);ctx.stroke();
+  ctx.save();ctx.translate(14,mt+ih/2);ctx.rotate(-Math.PI/2);ctx.fillStyle="#7a8aa0";ctx.font="11px DM Sans,sans-serif";ctx.textAlign="center";ctx.fillText("Evidence",0,0);ctx.restore();
+  cv._decY=decY;cv._ml=ml;cv._iw=iw;cv._mt=mt;cv._ih=ih;cv._pathW=pathW;
+  if(!confHi.length)confHi=mkFixed(0.20,CSTEPS,22,0.012,0.10);
+  if(!confLo.length)confLo=mkFixed(-0.20,CSTEPS,77,0.012,0.10)
+}
+function confPlay(){
+  const cv=$("conf-cv");if(!cv||A.confDone)return;
+  if(A.confId){cancelAnimationFrame(A.confId);A.confId=null}
+  const ctx=cv.getContext("2d"),{_decY:decY,_ml:ml,_ih:ih,_pathW:pathW}=cv;
+  const maxPx=ih/2-10,toY=v=>decY-v*maxPx/0.55,toX=s=>ml+s/(CSTEPS+1)*pathW;
+  function rd(){
+    drawConfBase(cv);
+    [["hi","rgba(22,152,88,.9)","#169858","High confidence"],["lo","rgba(204,48,64,.85)","#cc3040","Low confidence"]].forEach(([k,col,endCol,lbl])=>{
+      const path=k==="hi"?confHi:confLo,n=Math.min(A.confS,path.length);
+      ctx.strokeStyle=col;ctx.lineWidth=2;ctx.setLineDash([]);
+      ctx.beginPath();for(let i=0;i<n;i++){const x=toX(i),y=toY(Math.max(-0.70,Math.min(0.70,path[i])));i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)}
+      ctx.stroke();
+      if(A.confS>=CSTEPS){
+        const l=path[path.length-1],rx=toX(Math.min(path.length-1,CSTEPS)),ry=toY(Math.max(-0.5,Math.min(0.6,l)));
+        ctx.beginPath();ctx.arc(rx,ry,6,0,Math.PI*2);ctx.fillStyle=endCol;ctx.fill();
+        ctx.strokeStyle="rgba(255,255,255,.8)";ctx.lineWidth=1.5;ctx.stroke();
+        ctx.font="600 10px DM Sans,sans-serif";ctx.fillStyle=endCol;ctx.textAlign="left";
+        ctx.fillText(lbl,rx+10,ry+4)
+      }
+    })
+  }
+  const pb=$("conf-play");if(pb)pb.disabled=true;
+  A.confS=0;
+  const go=()=>{
+    A.confS=Math.min(A.confS+2,CSTEPS);rd();
+    if(A.confS<CSTEPS){A.confId=requestAnimationFrame(go)}
+    else{
+      A.confDone=true;
+      const cap=$("conf-cap");
+      if(cap)cap.innerHTML="Both trajectories start at the chosen boundary and accumulate for duration <i>\u03c4</i>.<ul style='margin:.45rem 0 0 1.1rem;line-height:1.75'><li><b style='color:#169858'>High confidence</b>: evidence continues to accumulate in the same direction as the chosen boundary.</li><li><b style='color:#cc3040'>Low confidence</b>: evidence reverses back toward the unchosen boundary.</li></ul>";
+      const ph=$("conf-nav-ph");if(ph){ph.innerHTML=navBar(S.dbp);bind()}
+    }
+  };requestAnimationFrame(go)
+}
+function confReset(){
+  if(A.confId){cancelAnimationFrame(A.confId);A.confId=null}
+  A.confDone=false;A.confS=0;confHi=[];confLo=[];
+  const cv=$("conf-cv");if(cv)drawConfBase(cv);
+  const cap=$("conf-cap");if(cap)cap.textContent="";
+  const pb=$("conf-play");if(pb){pb.textContent="\u25b6 Play";pb.disabled=false}
+}
+// ── TRAJECTORY CANVAS ─────────────────────────────────────────────────────
+function pregenTR(){
+  const w=S.wEst;
+  const refItem=TD[1]; // boxer/librarian, muscular, ls=2.104, lb=-2.944
+  if(!A.paths.b.length)A.paths.b=mkFlat(1.85,1.2,42,25);
+  if(!A.paths.bay.length)A.paths.bay=mkFlat(-0.42,1.2,99,25);
+  if(!A.paths.par.length){
+    A.parDrift=+(w*refItem.ls+(1-w)*refItem.lb).toFixed(2);
+    A.parG1=refItem.g1;A.parG2=refItem.g2;A.parAdj=refItem.adj;
+    // Try multiple seeds; pick shortest path that crosses boundary
+    // and is ≤ 2× the longer reference path (so time axis stays readable)
+    const maxLen=Math.max(A.paths.b.length,A.paths.bay.length)*2;
+    let best=null;
+    for(let seed=10;seed<60;seed++){
+      const p=mkFlat(A.parDrift,1.2,seed,25);
+      const crossed=Math.abs(p[p.length-1])>=1.2;
+      if(crossed&&p.length<=maxLen){best=p;break;}
+    }
+    // Fallback: if no short-enough boundary-crossing path found, use the
+    // shortest boundary-crossing one regardless of length
+    if(!best){
+      for(let seed=10;seed<200;seed++){
+        const p=mkFlat(A.parDrift,1.2,seed,25);
+        if(Math.abs(p[p.length-1])>=1.2){
+          if(!best||p.length<best.length)best=p;
+          if(p.length<=maxLen)break;
+        }
+      }
+    }
+    A.paths.par=best||mkFlat(A.parDrift,1.2,77,25);
+  }
+}
+function drawTRBase(cv){
+  const ctx=cv.getContext("2d"),W=cv.width,H=cv.height;
+  const ml=52,mr=12,mt=40,mb=28,iw=W-ml-mr,ih=H-mt-mb;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle="#eceff6";ctx.fillRect(0,0,W,H);
+  const bnd=1.2,toY=v=>mt+ih/2-v*(ih/2)/bnd,byU=toY(bnd),byL=toY(-bnd);
+  [["rgba(208,92,16,.45)",byU,"Boxer"],["rgba(30,136,204,.45)",byL,"Librarian"]].forEach(([c,y,lbl])=>{
+    ctx.strokeStyle=c;ctx.lineWidth=1.5;ctx.setLineDash([5,5]);
+    ctx.beginPath();ctx.moveTo(ml,y);ctx.lineTo(ml+iw,y);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=c.replace(".45","1");ctx.font="600 10px DM Sans,sans-serif";ctx.textAlign="left";
+    ctx.fillText(lbl,ml+4,y+(y===byU?-5:13))
+  });
+  ctx.strokeStyle="rgba(0,0,0,.08)";ctx.lineWidth=.8;
+  ctx.beginPath();ctx.moveTo(ml,toY(0));ctx.lineTo(ml+iw,toY(0));ctx.stroke();
+  ctx.strokeStyle="#b0bcd0";ctx.lineWidth=1.2;
+  ctx.beginPath();ctx.moveTo(ml,mt);ctx.lineTo(ml,mt+ih);ctx.lineTo(ml+iw,mt+ih);ctx.stroke();
+  ctx.fillStyle="#7a8aa0";ctx.font="11px DM Sans,sans-serif";ctx.textAlign="center";ctx.fillText("Time",ml+iw/2,H-3);
+  ctx.save();ctx.translate(14,mt+ih/2);ctx.rotate(-Math.PI/2);ctx.fillText("Evidence",0,0);ctx.restore();
+  cv._ml=ml;cv._iw=iw;cv._ih=ih;cv._mt=mt;cv._bnd=bnd
+}
+function trPlay(which){
+  const cv=$("tr-cv");if(!cv||A.trId)return;
+  const ctx=cv.getContext("2d"),{_ml:ml,_iw:iw,_ih:ih,_mt:mt,_bnd:bnd}=cv;
+  const toY=v=>mt+ih/2-v*(ih/2)/bnd;
+  const maxL=Math.max(A.paths.b.length,A.paths.bay.length,A.paths.par.length,300);
+  const toX=s=>ml+s/maxL*iw;
+  const colors={b:"rgba(208,92,16,.9)",bay:"rgba(30,136,204,.85)",par:"rgba(88,88,200,.9)"};
+  const dashes={b:[],bay:[4,4],par:[3,2]};
+  function redrawAll(){
+    drawTRBase(cv);
+    ["b","bay","par"].forEach(k=>{
+      if(trDrawn[k]<=0)return;
+      const p=A.paths[k],n=Math.min(trDrawn[k],p.length),c=colors[k];
+      ctx.strokeStyle=c;ctx.lineWidth=2.2;ctx.setLineDash(dashes[k]);
+      ctx.beginPath();for(let i=0;i<n;i++){const x=toX(i),y=toY(Math.max(-bnd,Math.min(bnd,p[i])));i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)}
+      ctx.stroke();ctx.setLineDash([]);
+      if(trDrawn[k]>=p.length){
+        const last=p[p.length-1],rx=toX(p.length-1),ry=toY(Math.max(-bnd,Math.min(bnd,last)));
+        ctx.beginPath();ctx.arc(rx,ry,6,0,Math.PI*2);
+        ctx.fillStyle=c.replace(/,.+\)/,",1)");ctx.fill();
+        ctx.strokeStyle="rgba(255,255,255,.7)";ctx.lineWidth=1.5;ctx.stroke()
+      }
+    })
+  }
+  const path=A.paths[which];let s=trDrawn[which]||0;
+  const speed=which==="b"?3:2;
+  const go=()=>{
+    s=Math.min(s+speed,path.length);trDrawn[which]=s;redrawAll();
+    if(s<path.length){A.trId=requestAnimationFrame(go)}
+    else{
+      A.trId=null;
+      const stepMap={b:1,bay:2,par:3};A.trStep=Math.max(A.trStep,stepMap[which]);
+      const last=path[path.length-1],choice=last>0?A.paths.b===A.paths[which]?"nurse":A.parG1||"nurse":"politician";
+      const choiceB=A.paths.b[A.paths.b.length-1]>0?"nurse":"politician";
+      const choiceBay=A.paths.bay[A.paths.bay.length-1]<0?"politician":"nurse";
+      const choicePar=A.parDrift>0?A.parG1||"nurse":A.parG2||"politician";
+      const dirPar=A.parDrift>0?"favors "+(A.parG1||"nurse"):"favors "+(A.parG2||"politician");
+      const caps={
+        b:"<b>Biased reasoner (w = 0.95):</b> Strong positive drift (v = +1.85) pulls toward the Boxer boundary quickly. Fast and high confidence \u2014 but the wrong answer given 950 librarians.",
+        bay:"<b>Bayesian reasoner (w = 0.50):</b> Negative drift (v = \u22120.42) — base-rate dominates. Slower, lower confidence \u2014 the correct answer (librarian).",
+        par:"<b>Your trajectory (w = "+S.wEst.toFixed(2)+"):</b> "+A.parG1+" vs "+A.parG2+", '"+A.parAdj+"'. Drift v = "+(A.parDrift>0?"+":"")+A.parDrift+", "+dirPar+". Boundary reached: "+choicePar+"."
+      };
+      const cap=$("tr-cap");if(cap)cap.innerHTML=caps[which];
+      // Update buttons
+      const bb=$("tr-b"),bayb=$("tr-bay"),parb=$("tr-par");
+      if(A.trStep>=1&&bb){bb.classList.add("btn-done");bb.disabled=true}
+      if(A.trStep>=1&&bayb)bayb.disabled=false;
+      if(A.trStep>=2&&bayb){bayb.classList.add("btn-done");bayb.disabled=true}
+      if(A.trStep>=2&&parb)parb.disabled=false;
+      if(A.trStep>=3&&parb){parb.classList.add("btn-done");parb.disabled=true}
+      if(A.trStep>=3){
+        const cw=$("cmp-wrap");if(cw)cw.style.opacity="1";
+        const bL=A.paths.b.length,bayL=A.paths.bay.length,parL=A.paths.par.length,mL=Math.max(bL,bayL,parL);
+        setTimeout(()=>{
+          [["cmp-rt-b",bL/mL*100,"var(--or)"],["cmp-rt-bay",bayL/mL*100,"var(--bl)"],["cmp-rt-par",parL/mL*100,"var(--pu)"]].forEach(([id,pct,col])=>{const e=$(id);if(e){e.style.width=pct+"%";e.style.background=col}});
+          const bLs=Math.abs(A.paths.b[bL-1]),bayLs=Math.abs(A.paths.bay[bayL-1]),parLs=Math.abs(A.paths.par[parL-1]);
+          [["cmp-cf-b",Math.min(92,bLs/1.2*92),"var(--or)"],["cmp-cf-bay",Math.min(45,bayLs/1.2*45),"var(--bl)"],["cmp-cf-par",Math.min(88,parLs/1.2*75),"var(--pu)"]].forEach(([id,pct,col])=>{const e=$(id);if(e){e.style.width=pct+"%";e.style.background=col}})
+        },300);
+        const ph=$("tr-nav-ph");if(ph){ph.innerHTML=navBar(S.dbp);bind()}
+      }
+    }
+  };requestAnimationFrame(go)
+}
+// ── DELIBERATION CURVES ───────────────────────────────────────────────────
+// Unmodified conflict items — Bayesian ~60%→82%, biased flat ~50%, matching paper
+const DEL_ITEMS=TD.filter(t=>Math.sign(t.ls)!==Math.sign(t.lb));
+function accCurve(wVal,nPts){
+  const aMin=1.5,aMax=8;
+  return Array.from({length:nPts},(_,i)=>{
+    const a=aMin+(aMax-aMin)*i/(nPts-1);
+    let acc=0;
+    for(const t of DEL_ITEMS){
+      const bayV=0.5*t.ls+0.5*t.lb,biasV=wVal*t.ls+(1-wVal)*t.lb,correct=bayV>0?1:-1;
+      acc+=sig(biasV*correct*a);
+    }
+    return acc/DEL_ITEMS.length;
+  });
+}
+let _delUserStep=0,_delUserId=null;
+function drawDelCurves(showUser,userStep){
+  const cv=$("del-cv");if(!cv)return;
+  const ctx=cv.getContext("2d"),W=cv.width,H=cv.height;
+  const ml=44,mr=14,mt=28,mb=36,iw=W-ml-mr,ih=H-mt-mb;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle="#eceff6";ctx.fillRect(0,0,W,H);
+  const nPts=60;
+  const toX=i=>ml+i/(nPts-1)*iw;
+  const yMin=0.40,yMax=0.90;
+  const toY=v=>mt+ih-(Math.max(yMin,Math.min(yMax,v))-yMin)/(yMax-yMin)*ih;
+  // Gridlines
+  [0.5,0.6,0.7,0.8].forEach(v=>{
+    ctx.strokeStyle="rgba(0,0,0,.06)";ctx.lineWidth=.8;ctx.setLineDash([3,4]);
+    ctx.beginPath();ctx.moveTo(ml,toY(v));ctx.lineTo(ml+iw,toY(v));ctx.stroke();
+    ctx.fillStyle="#8090a8";ctx.font="9px DM Sans,sans-serif";ctx.textAlign="right";
+    ctx.fillText(Math.round(v*100)+"%",ml-3,toY(v)+3);
+  });
+  ctx.setLineDash([]);
+  function drawCurve(pts,color,dash,nDraw){
+    const n=nDraw!=null?Math.min(nDraw,pts.length):pts.length;
+    if(n<1)return;
+    ctx.strokeStyle=color;ctx.lineWidth=2.2;ctx.setLineDash(dash||[]);
+    ctx.beginPath();for(let i=0;i<n;i++){i===0?ctx.moveTo(toX(i),toY(pts[i])):ctx.lineTo(toX(i),toY(pts[i]))}
+    ctx.stroke();ctx.setLineDash([]);
+  }
+  const bayPts=accCurve(0.5,nPts),biasPts=accCurve(0.95,nPts);
+  drawCurve(bayPts,"rgba(30,136,204,.9)",[]);
+  drawCurve(biasPts,"rgba(208,92,16,.9)",[6,4]);
+  if(showUser){
+    const userPts=accCurve(S.wEst,nPts);
+    drawCurve(userPts,"rgba(22,152,88,.95)",[],userStep!=null?userStep:nPts);
+  }
+  // Axes
+  ctx.strokeStyle="#b0bcd0";ctx.lineWidth=1.2;ctx.setLineDash([]);
+  ctx.beginPath();ctx.moveTo(ml,mt);ctx.lineTo(ml,mt+ih);ctx.lineTo(ml+iw,mt+ih);ctx.stroke();
+  ctx.fillStyle="#7a8aa0";ctx.font="10px DM Sans,sans-serif";ctx.textAlign="center";
+  ctx.fillText("Decision boundary (a)",ml+iw/2,H-5);
+  ctx.save();ctx.translate(11,mt+ih/2);ctx.rotate(-Math.PI/2);ctx.fillText("% correct",0,0);ctx.restore();
+  [2,4,6,8].forEach(v=>{
+    const xp=ml+(v-1.5)/(8-1.5)*iw;
+    ctx.fillStyle="#8090a8";ctx.font="9px DM Sans,sans-serif";ctx.textAlign="center";
+    ctx.fillText(v,xp,mt+ih+11);
+  });
+  // Horizontal legend row at TOP of chart area (above curves, below y-axis start)
+  const legendItems=[
+    {col:"rgba(30,136,204,.9)",dash:[],lbl:"Bayesian (w\u00a0=\u00a00.50)"},
+    {col:"rgba(208,92,16,.9)",dash:[6,4],lbl:"Stereotype-dominant (w\u00a0=\u00a00.95)"},
+    ...(showUser&&(userStep==null||userStep>=nPts)?[{col:"rgba(22,152,88,.95)",dash:[],lbl:"You (w\u00a0=\u00a0"+S.wEst.toFixed(2)+")"}]:[]),
+  ];
+  const lyLeg=mt-6,segW=16,gap=5;
+  ctx.font="9px DM Sans,sans-serif";
+  const totalW=legendItems.reduce((s,{lbl})=>s+ctx.measureText(lbl).width+segW+gap+12,0)-12;
+  let lx=ml+(iw-totalW)/2;
+  legendItems.forEach(({col,dash,lbl})=>{
+    ctx.strokeStyle=col;ctx.lineWidth=1.8;ctx.setLineDash(dash);
+    ctx.beginPath();ctx.moveTo(lx,lyLeg);ctx.lineTo(lx+segW,lyLeg);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle="#566070";ctx.font="9px DM Sans,sans-serif";ctx.textAlign="left";
+    const w=ctx.measureText(lbl).width;
+    ctx.fillText(lbl,lx+segW+gap,lyLeg+3.5);
+    lx+=segW+gap+w+12;
+  });
+}
+function animBenBars(){
+  _delUserStep=0;if(_delUserId){cancelAnimationFrame(_delUserId);_delUserId=null;}
+  drawDelCurves(false);
+  const btn=$("del-play");
+  if(btn)btn.addEventListener("click",()=>{
+    btn.disabled=true;
+    _delUserStep=0;
+    const nPts=60;
+    function go(){
+      _delUserStep=Math.min(_delUserStep+1,nPts);
+      drawDelCurves(true,_delUserStep);
+      if(_delUserStep<nPts){_delUserId=requestAnimationFrame(go)}
+      else{
+        _delUserId=null;btn.classList.add("btn-done");
+        const d=$("del-debrief");if(d){d.style.display="block";d.style.opacity="0";d.style.transition="opacity .5s";setTimeout(()=>{d.style.opacity="1"},20);}
+      }
+    }
+    requestAnimationFrame(go);
+  });
+}
+render();
+</script></body></html>
