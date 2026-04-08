@@ -118,7 +118,7 @@ let A={ddmStep:0,ddmId:null,ddmDone:false,
        confId:null,confDone:false,confS:0,
        exStep:0,
        trStep:0,trId:null,trDone:{b:false,bay:false,par:false},
-       paths:{b:[],bay:[],par:[]},parDrift:0,parG1:"",parG2:"",parAdj:""};
+       paths:{b:[],bay:[],par:[],b_smooth:null,bay_smooth:null,par_smooth:null},parDrift:0,parG1:"",parG2:"",parAdj:""};
 let _smooth=[],_noisy=[];
 let confHi=[],confLo=[];
 let trDrawn={b:0,bay:0,par:0};
@@ -147,6 +147,7 @@ function estWFull(rs){
       return s+lll;
     },0);
     if(0<w&&w<1)ll+=(priorA-1)*Math.log(w)+(priorB-1)*Math.log(1-w);
+    else ll=-Infinity; // Beta(3,3) density is 0 at boundaries
     grid[wi]=ll;
     if(ll>maxLL)maxLL=ll;
   }
@@ -179,15 +180,15 @@ function benefitSim(w,tr){
   return{lo:Math.round(lo/allConflict.length*100),hi:Math.round(hi/allConflict.length*100)}
 }
 function sRNG(seed){let s=seed>>>0;return()=>{s=(s*1664525+1013904223)>>>0;return s/0xffffffff}}
-function mkPath(drift,bnd,seed,dt,sg,mx){dt=dt||0.009;sg=sg||0.18;mx=mx||3500;const rng=sRNG(seed),p=[0];let x=0;for(let i=0;i<mx;i++){x+=drift*dt+sg*Math.sqrt(dt)*(rng()*2-1)*1.732;p.push(x);if(Math.abs(x)>=bnd)break}return p}
-function mkSmooth(drift,bnd,flat,dt){flat=flat||30;dt=dt||0.009;const p=[];for(let i=0;i<flat;i++)p.push(0);let x=0;for(let i=0;i<4000;i++){x+=drift*dt;p.push(x);if(x>=bnd)break}return p}
+function mkPath(drift,bnd,seed,dt,sg,mx){dt=dt||0.009;sg=sg||0.16;mx=mx||3500;const rng=sRNG(seed),p=[0];let x=0;for(let i=0;i<mx;i++){x+=drift*dt+sg*Math.sqrt(dt)*(rng()*2-1)*1.732;p.push(x);if(Math.abs(x)>=bnd)break}return p}
+function mkSmooth(drift,bnd,flat,dt){flat=flat||30;dt=dt||0.009;const p=[];for(let i=0;i<flat;i++)p.push(0);let x=0;for(let i=0;i<4000;i++){x+=drift*dt;p.push(x);if(Math.abs(x)>=Math.abs(bnd))break}return p}
 function mkFlat(drift,bnd,seed,flat){flat=flat||30;return[...new Array(flat).fill(0),...mkPath(drift,bnd,seed)]}
 function mkFixed(drift,steps,seed,dt,sg){dt=dt||0.012;sg=sg||0.13;const rng=sRNG(seed),p=[0];let x=0;for(let i=0;i<steps;i++){x+=drift*dt+sg*Math.sqrt(dt)*(rng()*2-1)*1.732;p.push(x)}return p}
 
 function render(){$("app").innerHTML=({welcome:rWelcome,instructions:rInst,trial:rTrial,debrief:rDB}[S.scr]||rWelcome)();bind();if(S.scr==="debrief")setTimeout(afterRender,80)}
 const navBar=n=>`<div class="page-nav"><span class="page-step">${n+1} / 9</span><button class="btn btn-pri" id="btn-next">Continue &rarr;</button></div>`;
-function rWelcome(){return`<div style="padding-top:1.5rem"><h1 style="font-size:2rem;margin-bottom:.35rem">Are you thinking in vain?</h1><p style="font-size:1.05rem;color:var(--dm);margin-bottom:2rem">An interactive demonstration</p><div class="card"><p style="margin-top:.25rem">You will complete <b>8 short reasoning problems</b>. Your responses are used to estimate your reasoning profile on the fly. Afterward, we walk through the normative computation, a model of how you combined the available information, and what this tells us about deliberation and bias.</p><p>This demonstration illustrates the main findings of our recent work: <b>Thinking in Vain: A Mechanistic Account of Biased Evidence Accumulation in Reasoning</b> (Beucler, Purcell, Charles, De Neys &amp; Desender).</p><p style="font-style:italic;color:#8090a8;margin-top:.3rem">Built with Claude.</p></div><div class="btn-row"><button class="btn btn-pri" id="btn-start">Start &rarr;</button></div></div>`}
-function rInst(){return`<div><div class="db-eye">Instructions</div><h1>How it works</h1><div class="card" style="margin-top:.75rem"><p>Each problem describes a fictional study with two groups. You'll see how many people are in each group and a one-word description of a randomly selected individual.</p><p><b>Your task:</b> drag the slider toward the group you think the individual most likely belongs to. Drag further if you're confident, stay near center if you're unsure.</p><div class="card-sm" style="text-align:center"><div class="t-line">This study contains lawyers and nurses.</div><div class="t-line">Person 'A' is kind.</div><div class="t-line">There are 995 lawyers and 5 nurses.</div><div style="margin-top:.9rem"><div style="display:flex;justify-content:space-between;font-size:.82rem;font-weight:500;color:var(--tx);margin-bottom:.35rem"><span>a lawyer</span><span>a nurse</span></div><div style="position:relative;height:10px;border-radius:5px;background:var(--s2);border:1px solid var(--bd)"><div style="position:absolute;top:50%;left:72%;width:22px;height:22px;border-radius:50%;background:#fff;border:2.5px solid var(--tx);transform:translate(-50%,-50%)"></div></div><div style="display:flex;justify-content:space-between;font-size:.68rem;color:#8090a8;margin-top:.4rem;font-style:italic"><span>certain</span><span>uncertain</span><span>certain</span></div></div></div></div><div class="btn-row"><button class="btn btn-pri" id="btn-inst">Begin &rarr;</button></div></div>`}
+function rWelcome(){return`<div style="padding-top:1.5rem"><h1 style="font-size:2rem;margin-bottom:.35rem">Are you thinking in vain?</h1><p style="font-size:1.05rem;color:var(--dm);margin-bottom:2rem">An interactive demonstration</p><div class="card"><p style="margin-top:.25rem">You will complete <b>8 short reasoning problems</b>. Your responses are used to estimate your reasoning profile on the fly. Afterward, we walk through the normative computation, a model of how you combined the available information, and what this tells us about deliberation and bias.</p><p>This demonstration illustrates the main findings of our recent work: <b>Thinking in Vain: A Mechanistic Account of Biased Evidence Accumulation in Reasoning</b> (Beucler, Purcell, Charles, De Neys &amp; Desender).</p><p style="font-style:italic;color:#8090a8;margin-top:.3rem">Built with the help of Claude.</p></div><div class="btn-row"><button class="btn btn-pri" id="btn-start">Start &rarr;</button></div></div>`}
+function rInst(){return`<div><div class="db-eye">Instructions</div><h1>How it works</h1><div class="card" style="margin-top:.75rem"><p>Each problem describes a fictional study with two groups. You'll see how many people are in each group and a one-word description of a randomly selected individual.</p><p><b>Your task:</b> drag the slider toward the group you think the individual most likely belongs to. Drag further if you're confident, stay near center if you're unsure.</p><div class="card-sm" style="text-align:center;opacity:.85"><div style="font-size:.72rem;color:#8090a8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">Example (non-interactive preview)</div><div class="t-line">This study contains lawyers and nurses.</div><div class="t-line">Person 'A' is kind.</div><div class="t-line">There are 995 lawyers and 5 nurses.</div><div style="margin-top:.9rem"><div style="display:flex;justify-content:space-between;font-size:.82rem;font-weight:500;color:var(--tx);margin-bottom:.35rem"><span>a lawyer</span><span>a nurse</span></div><div style="position:relative;height:10px;border-radius:5px;background:var(--s2);border:1px solid var(--bd)"><div style="position:absolute;top:50%;left:72%;width:22px;height:22px;border-radius:50%;background:#fff;border:2.5px solid var(--tx);transform:translate(-50%,-50%)"></div></div><div style="display:flex;justify-content:space-between;font-size:.68rem;color:#8090a8;margin-top:.4rem;font-style:italic"><span>certain</span><span>uncertain</span><span>certain</span></div></div></div></div><div class="btn-row"><button class="btn btn-pri" id="btn-inst">Begin &rarr;</button></div></div>`}
 function rTrial(){const t=S.trials[S.idx],flip=t.flip,lg=flip?t.g2:t.g1,rg=flip?t.g1:t.g2,L=String.fromCharCode(65+S.idx);
 return`<div><div class="prog"><div class="prog-bar"><div class="prog-fill" style="width:${Math.round(S.idx/8*100)}%"></div></div><div class="prog-lbl">Problem ${S.idx+1} of 8</div></div><div class="trial-card"><div class="t-line">This study contains ${t.g1}s and ${t.g2}s.</div><div class="t-line">Person '${L}' is ${t.adj}.</div><div class="t-line">There are ${t.n1.toLocaleString()} ${t.g1}s and ${t.n2.toLocaleString()} ${t.g2}s.</div><div class="t-q" style="margin-bottom:.5rem">Which group does Person '${L}' most likely belong to?</div>
 <div class="vas-wrap" id="vas-wrap">
@@ -196,7 +197,7 @@ return`<div><div class="prog"><div class="prog-bar"><div class="prog-fill" style
   <div class="vas-ticks">${Array(9).fill('<div class="vas-tick"></div>').join("")}</div>
   <div class="vas-labels"><span>certain</span><span>uncertain</span><span>certain</span></div>
 </div>
-<button class="btn btn-pri vas-submit" id="vas-submit">Confirm &rarr;</button>
+<button class="btn btn-pri vas-submit" id="vas-submit" disabled>Confirm &rarr;</button>
 </div></div>`}
 function rDB(){return[rDB0,rDB1,rDB2,rDB3,rDB4,rDB5,rDB6,rDB7,rDB8][S.dbp]()}
 
@@ -221,7 +222,7 @@ ${s>=3?navBar(S.dbp):""}</div>`}
 
 // DB2: Your result
 function rDB2(){const w=S.wEst,wp=Math.round(w*100),ci=S.wCI,lop=Math.round(ci.lo*100),hip=Math.round(ci.hi*100);
-const cat=w>=0.7?"stereotype-dominant":w>=0.3?"balanced":"base-rate-dominant";
+const cat=w>0.65?"stereotype-dominant":w>=0.35?"balanced":"base-rate-dominant";
 const col=cat==="stereotype-dominant"?"var(--or)":cat==="balanced"?"var(--pu)":"var(--bl)";
 const colHex=cat==="stereotype-dominant"?"#d05c10":cat==="balanced"?"#5858c8":"#1e88cc";
 const catLabel=cat==="stereotype-dominant"?"Stereotype-dominant":cat==="balanced"?"Balanced":"Base-rate dominant";
@@ -266,10 +267,10 @@ function rDB3(){return`<div><div class="db-eye">Part 3</div><h1>How decisions fo
 
 // DB4: Confidence
 const CSTEPS=175;
-function rDB4(){return`<div><div class="db-eye">Part 3b</div><h1>How can we model (biased) confidence?</h1><p style="margin-top:.5rem">Once a response is made, when a boundary is crossed, post-decision evidence accumulation can be used to model confidence (Pleskac &amp; Busemeyer, 2010), especially when it is reported after a response was made, as in our experiment. Accumulation continues briefly after the decision. How far evidence moves from the boundary determines confidence.</p><div class="cv-wrap"><canvas id="conf-cv" width="600" height="275" style="width:100%;display:block"></canvas><div class="cv-cap" id="conf-cap"></div></div><div style="display:flex;gap:.7rem;flex-wrap:wrap;margin-top:.15rem"><button class="btn btn-or" id="conf-play">&#9654; Play</button><button class="btn" id="conf-rs">Reset</button></div><div id="conf-nav-ph">${A.confDone?navBar(S.dbp):""}</div></div>`}
+function rDB4(){return`<div><div class="db-eye">Part 3b</div><h1>How can we model (biased) confidence?</h1><p style="margin-top:.5rem">Once a response is made — when a boundary is crossed — we need a mechanism to generate confidence. One elegant and widely used approach is <b>post-decision evidence accumulation</b> (Pleskac &amp; Busemeyer, 2010): accumulation continues briefly after the decision, and how far evidence moves from the chosen boundary determines confidence. Other implementations exist, but this one is particularly well suited when confidence is reported after the response, as in our experiment.</p><div class="cv-wrap"><canvas id="conf-cv" width="600" height="330" style="width:100%;display:block"></canvas><div class="cv-cap" id="conf-cap"></div></div><div style="display:flex;gap:.7rem;flex-wrap:wrap;margin-top:.15rem"><button class="btn btn-or" id="conf-play">&#9654; Play</button><button class="btn" id="conf-rs">Reset</button></div><div id="conf-nav-ph">${A.confDone?navBar(S.dbp):""}</div></div>`}
 
 // DB5: From words to numbers
-function rDB5(){const s=A.exStep,dB=+(0.95*2.104+0.05*(-2.944)).toFixed(2),dBay=+(0.5*2.104+0.5*(-2.944)).toFixed(2);return`<div><div class="db-eye">Part 4</div><h1>From words to numbers</h1><p style="margin-top:.5rem">Each problem provides two sources of information that can be quantified and fed into the model as evidence.</p><div class="card"><div style="text-align:center;font-size:.97rem;line-height:1.85;color:var(--tx);margin-bottom:.9rem">This study contains boxers and librarians.<br>Person 'A' is <span id="hl-adj" style="border-radius:3px;padding:0 3px;transition:background .4s,color .4s;${s>=2?"background:#fde8d8;color:var(--or)":""}">muscular</span>.<br>There are <span id="hl-n" style="border-radius:3px;padding:0 3px;transition:background .4s,color .4s;${s>=1?"background:#d8eef8;color:var(--bl)":""}">50 boxers</span> and <span id="hl-p" style="border-radius:3px;padding:0 3px;transition:background .4s,color .4s;${s>=1?"background:#d8eef8;color:var(--bl)":""}">950 librarians</span>.</div>
+function rDB5(){const s=A.exStep,dB=+(0.95*2.104+0.05*(-2.944)).toFixed(2),dBay=+(0.5*2.104+0.5*(-2.944)).toFixed(2);return`<div><div class="db-eye">Part 4</div><h1>From words to numbers</h1><p style="margin-top:.5rem">Each problem provides two sources of information that can be quantified and fed into the model as evidence.</p><div class="card" style="border-left:3px solid var(--pu);margin-bottom:.85rem"><p style="font-size:.88rem;margin-bottom:.4rem">The drift rate in the model is a weighted combination of the two evidence sources:</p><div style="background:var(--s2);border-radius:8px;padding:.7rem 1rem;font-size:1rem;font-weight:600;text-align:center;margin-bottom:.5rem">v = <span style="color:var(--or)">w</span> &times; stereotype evidence + <span style="color:var(--bl)">(1&minus;w)</span> &times; base-rate evidence</div><p style="font-size:.84rem;color:#566070;margin:0"><b>w</b> captures how much weight a person places on the stereotype relative to the base-rate: <b>w = 0.50</b> is Bayesian (equal weight), <b>w &rarr; 1</b> means the stereotype dominates, <b>w &rarr; 0</b> means base-rates dominate.</p></div><div class="card"><div style="text-align:center;font-size:.97rem;line-height:1.85;color:var(--tx);margin-bottom:.9rem">This study contains boxers and librarians.<br>Person 'A' is <span id="hl-adj" style="border-radius:3px;padding:0 3px;transition:background .4s,color .4s;${s>=2?"background:#fde8d8;color:var(--or)":""}">muscular</span>.<br>There are <span id="hl-n" style="border-radius:3px;padding:0 3px;transition:background .4s,color .4s;${s>=1?"background:#d8eef8;color:var(--bl)":""}">50 boxers</span> and <span id="hl-p" style="border-radius:3px;padding:0 3px;transition:background .4s,color .4s;${s>=1?"background:#d8eef8;color:var(--bl)":""}">950 librarians</span>.</div>
 <div style="opacity:${s>=1?1:.2};transition:opacity .5s"><div class="card-sm" style="border-left:3px solid var(--bl)"><div style="font-size:.78rem;font-weight:600;color:var(--bl);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.35rem">Base-rate information &rarr; evidence</div><div style="display:flex;align-items:center;gap:.5rem;font-size:1rem;font-weight:600">log<span class="frac"><span class="frac-n">50</span><span class="frac-d">950</span></span>= &minus;2.94<span style="font-size:.82rem;font-weight:400;color:var(--dm);margin-left:.3rem">&rarr; strongly favors librarian</span></div></div></div>
 <div style="opacity:${s>=2?1:.2};transition:opacity .5s;margin-top:.2rem"><div class="card-sm" style="border-left:3px solid var(--or)"><div style="font-size:.78rem;font-weight:600;color:var(--or);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.35rem">Stereotype information &rarr; evidence</div><div style="display:flex;align-items:center;gap:.5rem;font-size:1rem;font-weight:600">log<span class="frac"><span class="frac-n">92</span><span class="frac-d">11</span></span>= +2.13<span style="font-size:.82rem;font-weight:400;color:var(--dm);margin-left:.3rem">&rarr; strongly favors boxer</span></div><small>Typicality: 92/100 for boxers, 11/100 for librarians.</small></div></div>
 <div style="opacity:${s>=3?1:.2};transition:opacity .5s;margin-top:.2rem"><div class="card-sm" style="border-left:3px solid var(--tx)"><div style="font-size:.82rem;font-weight:600;margin-bottom:.6rem">Drift rate: v = w &times; stereotype evidence + (1&minus;w) &times; base-rate evidence</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem"><div style="background:rgba(208,92,16,.07);border-radius:7px;padding:.7rem;border:1px solid rgba(208,92,16,.2)"><div style="font-size:.75rem;font-weight:600;color:var(--or);margin-bottom:.3rem">Biased reasoner (w = 0.95)</div><div style="font-size:.85rem">0.95 &times; (+2.13) + 0.05 &times; (&minus;2.94)</div><div style="font-size:1.05rem;font-weight:600;margin-top:.2rem">v = +${dB}</div><small>Pulls toward boxer &mdash; wrong direction.</small></div><div style="background:rgba(30,136,204,.07);border-radius:7px;padding:.7rem;border:1px solid rgba(30,136,204,.2)"><div style="font-size:.75rem;font-weight:600;color:var(--bl);margin-bottom:.3rem">Bayesian reasoner (w = 0.50)</div><div style="font-size:.85rem">0.50 &times; (+2.13) + 0.50 &times; (&minus;2.94)</div><div style="font-size:1.05rem;font-weight:600;margin-top:.2rem">v = ${dBay}</div><small>Pulls toward librarian &mdash; correct direction.</small></div></div></div></div>
@@ -277,17 +278,17 @@ function rDB5(){const s=A.exStep,dB=+(0.95*2.104+0.05*(-2.944)).toFixed(2),dBay=
 ${s>=3?navBar(S.dbp):""}</div>`}
 
 // DB6: Trajectories
-function rDB6(){const w=S.wEst,ts=A.trStep,dP=A.parDrift;return`<div><div class="db-eye">Part 5</div><h1>What does the model predict?</h1><p style="margin-top:.5rem">Applying the model to simulate reasoning on a conflict trial: 50 boxers and 950 librarians, Person A is muscular. Three drift rates from three different evidence-weighting strategies.</p><div class="cv-wrap"><canvas id="tr-cv" width="600" height="270" style="width:100%;display:block"></canvas><div class="cv-cap" id="tr-cap">Click a button below to add each trajectory.</div></div><div class="btn-row"><button class="btn" id="tr-b">1. Biased reasoner (w = 0.95, v = +1.85)</button><button class="btn" id="tr-bay" disabled>2. Bayesian reasoner (w = 0.50, v = &minus;0.42)</button><button class="btn" id="tr-par" disabled>3. Your trajectory (w = ${w.toFixed(2)})</button></div>
-<div id="cmp-wrap" style="opacity:${ts>=3?1:0};transition:opacity .6s;margin-top:1rem"><div class="cmp-grid"><div class="cmp-cell"><div class="cmp-ttl" style="color:var(--or)">Biased</div><div class="cmp-row">RT <div class="cmp-bar"><div class="cmp-bf" id="cmp-rt-b" style="width:0%"></div></div></div><div class="cmp-row">Confidence <div class="cmp-bar"><div class="cmp-bf" id="cmp-cf-b" style="width:0%"></div></div></div><small style="display:block;margin-top:.4rem">Fast &middot; High confidence &middot; Wrong (nurse)</small></div><div class="cmp-cell"><div class="cmp-ttl" style="color:var(--bl)">Bayesian</div><div class="cmp-row">RT <div class="cmp-bar"><div class="cmp-bf" id="cmp-rt-bay" style="width:0%"></div></div></div><div class="cmp-row">Confidence <div class="cmp-bar"><div class="cmp-bf" id="cmp-cf-bay" style="width:0%"></div></div></div><small style="display:block;margin-top:.4rem">Slow &middot; Low confidence &middot; Correct (politician)</small></div><div class="cmp-cell"><div class="cmp-ttl" style="color:var(--pu)">You</div><div class="cmp-row">RT <div class="cmp-bar"><div class="cmp-bf" id="cmp-rt-par" style="width:0%"></div></div></div><div class="cmp-row">Confidence <div class="cmp-bar"><div class="cmp-bf" id="cmp-cf-par" style="width:0%"></div></div></div><small style="display:block;margin-top:.4rem">w = ${w.toFixed(2)}</small></div></div></div>
+function rDB6(){const w=S.wEst,ts=A.trStep,dP=A.parDrift;return`<div><div class="db-eye">Part 5</div><h1>What does the model predict?</h1><p style="margin-top:.5rem">Applying the model to a conflict trial (50 boxers, 950 librarians, Person A is muscular). Each evidence-weighting strategy yields a different drift rate. Solid lines show the noiseless drift; faded lines are individual simulated trials.</p><div class="cv-wrap"><canvas id="tr-cv" width="600" height="270" style="width:100%;display:block"></canvas><div class="cv-cap" id="tr-cap">Click a button below to add each trajectory.</div></div><div class="btn-row"><button class="btn" id="tr-b">1. Biased reasoner (w = 0.95, v = +1.85)</button><button class="btn" id="tr-bay" disabled>2. Bayesian reasoner (w = 0.50, v = &minus;0.42)</button><button class="btn" id="tr-par" disabled>3. Your trajectory (w = ${w.toFixed(2)})</button></div>
+<div id="cmp-wrap" style="opacity:${ts>=3?1:0};transition:opacity .6s;margin-top:1rem"><div class="cmp-grid"><div class="cmp-cell"><div class="cmp-ttl" style="color:var(--or)">Biased</div><div class="cmp-row">Avg. RT <div class="cmp-bar"><div class="cmp-bf" id="cmp-rt-b" style="width:0%"></div></div></div><div class="cmp-row">Avg. confidence <div class="cmp-bar"><div class="cmp-bf" id="cmp-cf-b" style="width:0%"></div></div></div><small style="display:block;margin-top:.4rem">On average: fast &middot; High confidence &middot; Wrong (boxer)</small></div><div class="cmp-cell"><div class="cmp-ttl" style="color:var(--bl)">Bayesian</div><div class="cmp-row">Avg. RT <div class="cmp-bar"><div class="cmp-bf" id="cmp-rt-bay" style="width:0%"></div></div></div><div class="cmp-row">Avg. confidence <div class="cmp-bar"><div class="cmp-bf" id="cmp-cf-bay" style="width:0%"></div></div></div><small style="display:block;margin-top:.4rem">On average: slow &middot; Low confidence &middot; Correct (librarian)</small></div><div class="cmp-cell"><div class="cmp-ttl" style="color:var(--pu)">You</div><div class="cmp-row">Avg. RT <div class="cmp-bar"><div class="cmp-bf" id="cmp-rt-par" style="width:0%"></div></div></div><div class="cmp-row">Avg. confidence <div class="cmp-bar"><div class="cmp-bf" id="cmp-cf-par" style="width:0%"></div></div></div><small id="cmp-par-summary" style="display:block;margin-top:.4rem"></small></div></div></div>
 <div id="tr-nav-ph">${ts>=3?navBar(S.dbp):""}</div></div>`}
 
 // DB7: Deliberation
 function rDB7(){const w=S.wEst;
-const catTxt=w>=0.7?`With a <b>stereotype-dominant</b> profile like yours (w&thinsp;=&thinsp;${w.toFixed(2)}), deliberating longer is likely to have little effect on accuracy — and may even worsen it. Accumulating more of a distorted evidence signal mainly reinforces the wrong answer. Effective debiasing would likely require changing how you weight the evidence, not just slowing down.`:
-w>=0.3?`With a <b>balanced</b> profile like yours (w&thinsp;=&thinsp;${w.toFixed(2)}), deliberating longer is likely to help. With weighting close to the Bayesian optimum, more evidence averaging reduces noise in the right direction.`:
+const catTxt=w>0.65?`With a <b>stereotype-dominant</b> profile like yours (w&thinsp;=&thinsp;${w.toFixed(2)}), deliberating longer is likely to have little effect on accuracy — and may even worsen it. Accumulating more of a distorted evidence signal mainly reinforces the wrong answer. Effective debiasing would likely require changing how you weight the evidence, not just slowing down.`:
+w>=0.35?`With a <b>balanced</b> profile like yours (w&thinsp;=&thinsp;${w.toFixed(2)}), deliberating longer is likely to help. With weighting close to the Bayesian optimum, more evidence averaging reduces noise in the right direction.`:
 `With a <b>base-rate dominant</b> profile like yours (w&thinsp;=&thinsp;${w.toFixed(2)}), deliberating longer is also likely to have limited benefit — the evidence signal is distorted at its source, just in the opposite direction. Effective integration would likely require giving more weight to the stereotype as well.`;
 return`<div><div class="db-eye">Part 6</div><h1>The limits of deliberation</h1><p style="margin-top:.5rem">More cautious and deliberate responses can be achieved by raising the decision boundary (a), making responses slower. For a Bayesian reasoner this improves performance, because more evidence averaging reduces noise. For a biased reasoner, it mainly extends the accumulation of a distorted evidence signal — and can even worsen performance.</p>
-<div class="cv-wrap"><canvas id="del-cv" width="520" height="290" style="width:100%;display:block"></canvas><div class="cv-cap" id="del-cap" style="font-size:.82rem">Predicted accuracy on conflict trials as a function of decision boundary (a).</div></div>
+<div class="cv-wrap"><canvas id="del-cv" width="420" height="420" style="width:100%;max-width:420px;display:block;margin:0 auto"></canvas><div class="cv-cap" id="del-cap" style="font-size:.82rem">Predicted accuracy on conflict trials as a function of decision boundary (a).</div></div>
 <div style="display:flex;gap:.7rem;flex-wrap:wrap;margin-top:.15rem"><button class="btn btn-or" id="del-play">&#9654; Show my curve (w&nbsp;=&nbsp;${w.toFixed(2)})</button></div>
 <div class="card" id="del-debrief" style="margin-top:.8rem;display:none"><p style="font-size:.83rem;margin-bottom:.5rem">${catTxt}</p></div>${navBar(S.dbp)}</div>`}
 
@@ -301,9 +302,9 @@ function bind(){
   $("btn-restart")?.addEventListener("click",fullReset);
   $("btn-share")?.addEventListener("click",()=>{
     const w=S.wEst;
-    const cat=w>=0.7?"Stereotype-dominant":w>=0.3?"Balanced":"Base-rate dominant";
-    const desc=w>=0.7?"My choices were driven mostly by stereotypes, with little influence of base-rate information.":
-      w>=0.3?"My choices showed sensitivity to both stereotype and base-rate information.":
+    const cat=w>0.65?"Stereotype-dominant":w>=0.35?"Balanced":"Base-rate dominant";
+    const desc=w>0.65?"My choices were driven mostly by stereotypes, with little influence of base-rate information.":
+      w>=0.35?"My choices showed sensitivity to both stereotype and base-rate information.":
       "My choices were driven mostly by base-rate information, with little influence of stereotypes.";
     navigator.clipboard?.writeText(
       "I tried the 'Are you thinking in vain?' reasoning demo.\n\n"+
@@ -317,7 +318,7 @@ function bind(){
   (function(){
     const track=$("vas-track"),thumb=$("vas-thumb"),fl=$("vas-fl"),fr=$("vas-fr"),btn=$("vas-submit");
     if(!track)return;
-    let dragging=false,pos=0; // pos in [-1,+1], 0=center
+    let dragging=false,pos=0,hasMoved=false; // pos in [-1,+1], 0=center
     function setPos(p){
       pos=Math.max(-1,Math.min(1,p));
       const pct=(pos+1)/2*100;
@@ -325,6 +326,7 @@ function bind(){
       const half=Math.abs(pos)/2*100;
       if(pos<0){fl.style.width=half+"%";fr.style.width="0%"}
       else{fr.style.width=half+"%";fl.style.width="0%"}
+      if(!hasMoved){hasMoved=true;if(btn)btn.disabled=false}
     }
     function evtX(e){return e.touches?e.touches[0].clientX:e.clientX}
     function onMove(e){
@@ -368,7 +370,7 @@ function bind(){
 }
 function fullReset(){
   S={scr:"welcome",trials:[],idx:0,resp:[],wEst:0.5,wCI:{lo:0.05,hi:0.95},dbp:0,bStep:0};
-  A={ddmStep:0,ddmId:null,ddmDone:false,confId:null,confDone:false,confS:0,exStep:0,trStep:0,trId:null,trDone:{b:false,bay:false,par:false},paths:{b:[],bay:[],par:[]},parDrift:0,parG1:"",parG2:"",parAdj:""};
+  A={ddmStep:0,ddmId:null,ddmDone:false,confId:null,confDone:false,confS:0,exStep:0,trStep:0,trId:null,trDone:{b:false,bay:false,par:false},paths:{b:[],bay:[],par:[],b_smooth:null,bay_smooth:null,par_smooth:null},parDrift:0,parG1:"",parG2:"",parAdj:""};
   _smooth=[];_noisy=[];confHi=[];confLo=[];trDrawn={b:0,bay:0,par:0};render()
 }
 function advDB(){
@@ -377,7 +379,7 @@ function advDB(){
   if(A.trId){cancelAnimationFrame(A.trId);A.trId=null}
   S.dbp++;
   A.exStep=0;A.trStep=0;A.ddmStep=0;A.ddmDone=false;A.confId=null;A.confDone=false;A.confS=0;
-  _smooth=[];_noisy=[];confHi=[];confLo=[];trDrawn={b:0,bay:0,par:0};A.paths={b:[],bay:[],par:[]};
+  _smooth=[];_noisy=[];confHi=[];confLo=[];trDrawn={b:0,bay:0,par:0};A.paths={b:[],bay:[],par:[],b_smooth:null,bay_smooth:null,par_smooth:null};
   render()
 }
 function afterRender(){
@@ -531,7 +533,7 @@ function updateDDMUI(){
 // ── CONFIDENCE CANVAS ─────────────────────────────────────────────────────
 function drawConfBase(cv){
   const ctx=cv.getContext("2d"),W=cv.width,H=cv.height;
-  const ml=52,mr=16,mt=22,mb=52,iw=W-ml-mr,ih=H-mt-mb;
+  const ml=52,mr=16,mt=22,mb=72,iw=W-ml-mr,ih=H-mt-mb;
   ctx.clearRect(0,0,W,H);ctx.fillStyle="#eceff6";ctx.fillRect(0,0,W,H);
   const decY=mt+ih/2,pathW=iw*0.58;
   ctx.fillStyle="rgba(22,152,88,.06)";ctx.fillRect(ml,mt,iw,decY-mt);
@@ -539,7 +541,13 @@ function drawConfBase(cv){
   ctx.strokeStyle="rgba(208,92,16,.55)";ctx.lineWidth=1.8;ctx.setLineDash([5,5]);
   ctx.beginPath();ctx.moveTo(ml,decY);ctx.lineTo(ml+iw,decY);ctx.stroke();ctx.setLineDash([]);
   ctx.font="600 10px DM Sans,sans-serif";ctx.fillStyle="rgba(208,92,16,.88)";ctx.textAlign="center";
-  ctx.fillText("Chosen response boundary",ml+iw*0.35,decY-5);
+  ctx.fillText("Chosen response boundary (upper)",ml+iw*0.35,decY-5);
+  // Unchosen boundary at bottom
+  const unchosenY=mt+ih;
+  ctx.strokeStyle="rgba(120,140,170,.45)";ctx.lineWidth=1.5;ctx.setLineDash([5,5]);
+  ctx.beginPath();ctx.moveTo(ml,unchosenY);ctx.lineTo(ml+iw,unchosenY);ctx.stroke();ctx.setLineDash([]);
+  ctx.font="600 10px DM Sans,sans-serif";ctx.fillStyle="rgba(120,140,170,.7)";ctx.textAlign="center";
+  ctx.fillText("Unchosen boundary (lower)",ml+iw*0.35,unchosenY+13);
   // Rotated zone labels on right side
   const rZoneX = ml + pathW + (iw - pathW) / 2;
 
@@ -567,7 +575,7 @@ function drawConfBase(cv){
   ctx.fillText("region", 0, 6);
   ctx.restore();
   // tau annotation
-  const tauY=mt+ih+12;
+  const tauY=mt+ih+26;
   ctx.strokeStyle="rgba(60,80,110,.45)";ctx.lineWidth=1;
   ctx.beginPath();ctx.moveTo(ml,tauY);ctx.lineTo(ml+pathW,tauY);ctx.stroke();
   [ml,ml+pathW].forEach(x=>{ctx.beginPath();ctx.moveTo(x,tauY-3);ctx.lineTo(x,tauY+3);ctx.stroke()});
@@ -611,7 +619,7 @@ function confPlay(){
     else{
       A.confDone=true;
       const cap=$("conf-cap");
-      if(cap)cap.innerHTML="Both trajectories start at the chosen boundary and accumulate for duration <i>\u03c4</i>.<ul style='margin:.45rem 0 0 1.1rem;line-height:1.75'><li><b style='color:#169858'>High confidence</b>: evidence continues to accumulate in the same direction as the chosen boundary.</li><li><b style='color:#cc3040'>Low confidence</b>: evidence reverses back toward the unchosen boundary.</li></ul>";
+      if(cap)cap.innerHTML="Both trajectories start at the chosen boundary (upper boundary in this example) and accumulate for duration <i>\u03c4</i>.<ul style='margin:.45rem 0 0 1.1rem;line-height:1.75'><li><b style='color:#169858'>High confidence</b>: evidence continues away from the chosen boundary, moving further from the unchosen boundary below — reinforcing the decision.</li><li><b style='color:#cc3040'>Low confidence</b>: evidence reverses back toward the unchosen boundary below — casting doubt on the decision.</li></ul>";
       const ph=$("conf-nav-ph");if(ph){ph.innerHTML=navBar(S.dbp);bind()}
     }
   };requestAnimationFrame(go)
@@ -624,35 +632,43 @@ function confReset(){
   const pb=$("conf-play");if(pb){pb.textContent="\u25b6 Play";pb.disabled=false}
 }
 // ── TRAJECTORY CANVAS ─────────────────────────────────────────────────────
+const TR_N_NOISY=10; // number of stochastic trajectories per reasoner
+function genCappedPaths(drift,bnd,flat,maxLen){
+  const paths=[];let seed=40;
+  while(paths.length<TR_N_NOISY&&seed<500){
+    const p=mkFlat(drift,bnd,seed,flat);
+    seed++;
+    if(p.length<=maxLen)paths.push(p);
+  }
+  return paths;
+}
+function genTrimmedPaths(drift,bnd,flat){
+  // First pass uncapped, then cap at 1.5× median to remove outliers
+  const raw=genCappedPaths(drift,bnd,flat,3500);
+  const sorted=[...raw].sort((a,b)=>a.length-b.length);
+  const medLen=sorted[Math.floor(sorted.length/2)].length;
+  const cap=Math.round(medLen*1.5);
+  return genCappedPaths(drift,bnd,flat,cap);
+}
 function pregenTR(){
   const w=S.wEst;
   const refItem=TD[1]; // boxer/librarian, muscular, ls=2.104, lb=-2.944
-  if(!A.paths.b.length)A.paths.b=mkFlat(1.85,1.2,42,25);
-  if(!A.paths.bay.length)A.paths.bay=mkFlat(-0.42,1.2,99,25);
+  const bnd=1.2,flat=25;
+  if(!A.paths.bay.length){
+    A.paths.bay_smooth=mkSmooth(-0.42,-bnd,flat,0.009);
+    A.paths.bay=genTrimmedPaths(-0.42,bnd,flat);
+  }
+  const maxLen=Math.max(...A.paths.bay.map(p=>p.length))*2;
+  if(!A.paths.b.length){
+    A.paths.b_smooth=mkSmooth(1.85,bnd,flat,0.009);
+    A.paths.b=genTrimmedPaths(1.85,bnd,flat);
+  }
   if(!A.paths.par.length){
     A.parDrift=+(w*refItem.ls+(1-w)*refItem.lb).toFixed(2);
     A.parG1=refItem.g1;A.parG2=refItem.g2;A.parAdj=refItem.adj;
-    // Try multiple seeds; pick shortest path that crosses boundary
-    // and is ≤ 2× the longer reference path (so time axis stays readable)
-    const maxLen=Math.max(A.paths.b.length,A.paths.bay.length)*2;
-    let best=null;
-    for(let seed=10;seed<60;seed++){
-      const p=mkFlat(A.parDrift,1.2,seed,25);
-      const crossed=Math.abs(p[p.length-1])>=1.2;
-      if(crossed&&p.length<=maxLen){best=p;break;}
-    }
-    // Fallback: if no short-enough boundary-crossing path found, use the
-    // shortest boundary-crossing one regardless of length
-    if(!best){
-      for(let seed=10;seed<200;seed++){
-        const p=mkFlat(A.parDrift,1.2,seed,25);
-        if(Math.abs(p[p.length-1])>=1.2){
-          if(!best||p.length<best.length)best=p;
-          if(p.length<=maxLen)break;
-        }
-      }
-    }
-    A.paths.par=best||mkFlat(A.parDrift,1.2,77,25);
+    const targetBnd=A.parDrift>=0?bnd:-bnd;
+    A.paths.par_smooth=mkSmooth(A.parDrift,targetBnd,flat,0.009);
+    A.paths.par=genTrimmedPaths(A.parDrift,bnd,flat);
   }
 }
 function drawTRBase(cv){
@@ -678,46 +694,55 @@ function trPlay(which){
   const cv=$("tr-cv");if(!cv||A.trId)return;
   const ctx=cv.getContext("2d"),{_ml:ml,_iw:iw,_ih:ih,_mt:mt,_bnd:bnd}=cv;
   const toY=v=>mt+ih/2-v*(ih/2)/bnd;
-  const maxL=Math.max(A.paths.b.length,A.paths.bay.length,A.paths.par.length,300);
+  // Compute maxL across all generated paths
+  let allLens=[];
+  ["b","bay","par"].forEach(k=>{
+    if(A.paths[k]&&A.paths[k].length)A.paths[k].forEach(p=>allLens.push(p.length));
+    if(A.paths[k+"_smooth"])allLens.push(A.paths[k+"_smooth"].length);
+  });
+  const maxL=Math.max(...allLens,300);
   const toX=s=>ml+s/maxL*iw;
-  const colors={b:"rgba(208,92,16,.9)",bay:"rgba(30,136,204,.85)",par:"rgba(88,88,200,.9)"};
-  const dashes={b:[],bay:[4,4],par:[3,2]};
+  const solidColors={b:"rgba(208,92,16,.9)",bay:"rgba(30,136,204,.85)",par:"rgba(88,88,200,.9)"};
+  const noisyColors={b:"rgba(208,92,16,.15)",bay:"rgba(30,136,204,.15)",par:"rgba(88,88,200,.15)"};
+  function drawPath(pts,n,color,lw,dash){
+    const nn=Math.min(n,pts.length);if(nn<1)return;
+    ctx.strokeStyle=color;ctx.lineWidth=lw;ctx.setLineDash(dash||[]);
+    ctx.beginPath();
+    for(let i=0;i<nn;i++){const x=toX(i),y=toY(Math.max(-bnd,Math.min(bnd,pts[i])));i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)}
+    ctx.stroke();ctx.setLineDash([]);
+  }
   function redrawAll(){
     drawTRBase(cv);
     ["b","bay","par"].forEach(k=>{
       if(trDrawn[k]<=0)return;
-      const p=A.paths[k],n=Math.min(trDrawn[k],p.length),c=colors[k];
-      ctx.strokeStyle=c;ctx.lineWidth=2.2;ctx.setLineDash(dashes[k]);
-      ctx.beginPath();for(let i=0;i<n;i++){const x=toX(i),y=toY(Math.max(-bnd,Math.min(bnd,p[i])));i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)}
-      ctx.stroke();ctx.setLineDash([]);
-      if(trDrawn[k]>=p.length){
-        const last=p[p.length-1],rx=toX(p.length-1),ry=toY(Math.max(-bnd,Math.min(bnd,last)));
-        ctx.beginPath();ctx.arc(rx,ry,6,0,Math.PI*2);
-        ctx.fillStyle=c.replace(/,.+\)/,",1)");ctx.fill();
-        ctx.strokeStyle="rgba(255,255,255,.7)";ctx.lineWidth=1.5;ctx.stroke()
+      const n=trDrawn[k];
+      // Draw noisy trajectories first (low alpha)
+      if(A.paths[k]&&A.paths[k].length){
+        A.paths[k].forEach(p=>drawPath(p,n,noisyColors[k],1.5));
       }
-    })
+      // Draw smooth drift line on top (solid)
+      const sm=A.paths[k+"_smooth"];
+      if(sm)drawPath(sm,n,solidColors[k],2.5);
+    });
   }
-  const path=A.paths[which];let s=trDrawn[which]||0;
-  const speed=which==="b"?3:2;
+  // Find the longest path for this reasoner (smooth or any noisy)
+  const sm=A.paths[which+"_smooth"]||[];
+  const noisyPaths=A.paths[which]||[];
+  const longestLen=Math.max(sm.length,...noisyPaths.map(p=>p.length));
+  let s=trDrawn[which]||0;
+  const speed=3;
   const go=()=>{
-    s=Math.min(s+speed,path.length);trDrawn[which]=s;redrawAll();
-    if(s<path.length){A.trId=requestAnimationFrame(go)}
+    s=Math.min(s+speed,longestLen);trDrawn[which]=s;redrawAll();
+    if(s<longestLen){A.trId=requestAnimationFrame(go)}
     else{
       A.trId=null;
       const stepMap={b:1,bay:2,par:3};A.trStep=Math.max(A.trStep,stepMap[which]);
-      const last=path[path.length-1],choice=last>0?A.paths.b===A.paths[which]?"nurse":A.parG1||"nurse":"politician";
-      const choiceB=A.paths.b[A.paths.b.length-1]>0?"nurse":"politician";
-      const choiceBay=A.paths.bay[A.paths.bay.length-1]<0?"politician":"nurse";
-      const choicePar=A.parDrift>0?A.parG1||"nurse":A.parG2||"politician";
-      const dirPar=A.parDrift>0?"favors "+(A.parG1||"nurse"):"favors "+(A.parG2||"politician");
       const caps={
-        b:"<b>Biased reasoner (w = 0.95):</b> Strong positive drift (v = +1.85) pulls toward the Boxer boundary quickly. Fast and high confidence \u2014 but the wrong answer given 950 librarians.",
-        bay:"<b>Bayesian reasoner (w = 0.50):</b> Negative drift (v = \u22120.42) — base-rate dominates. Slower, lower confidence \u2014 the correct answer (librarian).",
-        par:"<b>Your trajectory (w = "+S.wEst.toFixed(2)+"):</b> "+A.parG1+" vs "+A.parG2+", '"+A.parAdj+"'. Drift v = "+(A.parDrift>0?"+":"")+A.parDrift+", "+dirPar+". Boundary reached: "+choicePar+"."
+        b:"<b>Biased reasoner (w = 0.95):</b> Strong positive drift (v = +1.85) pulls toward the Boxer boundary quickly. On average: fast, high confidence \u2014 but the wrong answer given 950 librarians.",
+        bay:"<b>Bayesian reasoner (w = 0.50):</b> Negative drift (v = \u22120.42) \u2014 base-rate dominates. On average: slower, lower confidence \u2014 the correct answer (librarian).",
+        par:"<b>Your trajectory (w = "+S.wEst.toFixed(2)+"):</b> "+A.parG1+" vs "+A.parG2+", '"+A.parAdj+"'. Drift v = "+(A.parDrift>0?"+":"")+A.parDrift+"."
       };
       const cap=$("tr-cap");if(cap)cap.innerHTML=caps[which];
-      // Update buttons
       const bb=$("tr-b"),bayb=$("tr-bay"),parb=$("tr-par");
       if(A.trStep>=1&&bb){bb.classList.add("btn-done");bb.disabled=true}
       if(A.trStep>=1&&bayb)bayb.disabled=false;
@@ -726,11 +751,30 @@ function trPlay(which){
       if(A.trStep>=3&&parb){parb.classList.add("btn-done");parb.disabled=true}
       if(A.trStep>=3){
         const cw=$("cmp-wrap");if(cw)cw.style.opacity="1";
-        const bL=A.paths.b.length,bayL=A.paths.bay.length,parL=A.paths.par.length,mL=Math.max(bL,bayL,parL);
+        // Compute expected RT and confidence from drift rate directly
+        // Expected first-passage time for DDM: E[RT] ~ a/v (for large v), inversely proportional to |drift|
+        // Confidence proxy: |drift| (stronger drift = higher confidence on average)
+        const drifts={b:1.85,bay:-0.42,par:A.parDrift};
+        const bnd=1.2;
+        // Expected RT proportional to boundary/|drift| (+ flat period)
+        function expectedRT(d){return 25+bnd/Math.max(Math.abs(d),0.01)/0.009}
+        const bRT=expectedRT(drifts.b),bayRT=expectedRT(drifts.bay),parRT=expectedRT(drifts.par);
+        const mRT=Math.max(bRT,bayRT,parRT);
+        // Confidence proportional to |drift|
+        const absDrifts={b:Math.abs(drifts.b),bay:Math.abs(drifts.bay),par:Math.abs(drifts.par)};
+        const mCf=Math.max(absDrifts.b,absDrifts.bay,absDrifts.par);
         setTimeout(()=>{
-          [["cmp-rt-b",bL/mL*100,"var(--or)"],["cmp-rt-bay",bayL/mL*100,"var(--bl)"],["cmp-rt-par",parL/mL*100,"var(--pu)"]].forEach(([id,pct,col])=>{const e=$(id);if(e){e.style.width=pct+"%";e.style.background=col}});
-          const bLs=Math.abs(A.paths.b[bL-1]),bayLs=Math.abs(A.paths.bay[bayL-1]),parLs=Math.abs(A.paths.par[parL-1]);
-          [["cmp-cf-b",Math.min(92,bLs/1.2*92),"var(--or)"],["cmp-cf-bay",Math.min(45,bayLs/1.2*45),"var(--bl)"],["cmp-cf-par",Math.min(88,parLs/1.2*75),"var(--pu)"]].forEach(([id,pct,col])=>{const e=$(id);if(e){e.style.width=pct+"%";e.style.background=col}})
+          [["cmp-rt-b",bRT/mRT*100,"var(--or)"],["cmp-rt-bay",bayRT/mRT*100,"var(--bl)"],["cmp-rt-par",parRT/mRT*100,"var(--pu)"]].forEach(([id,pct,col])=>{const e=$(id);if(e){e.style.width=pct+"%";e.style.background=col}});
+          [["cmp-cf-b",absDrifts.b/mCf*90,"var(--or)"],["cmp-cf-bay",absDrifts.bay/mCf*90,"var(--bl)"],["cmp-cf-par",absDrifts.par/mCf*90,"var(--pu)"]].forEach(([id,pct,col])=>{const e=$(id);if(e){e.style.width=pct+"%";e.style.background=col}});
+          // Simple "You" summary: correct/wrong based on drift direction
+          const ps=$("cmp-par-summary");
+          if(ps){
+            const bayV=0.5*2.104+0.5*(-2.944);
+            const correctGroup=bayV<0?"librarian":"boxer";
+            const chosenGroup=A.parDrift>0?"boxer":"librarian";
+            const right=chosenGroup===correctGroup?"Correct":"Wrong";
+            ps.innerHTML="On average: "+right+" ("+chosenGroup+")";
+          }
         },300);
         const ph=$("tr-nav-ph");if(ph){ph.innerHTML=navBar(S.dbp);bind()}
       }
@@ -738,10 +782,14 @@ function trPlay(which){
   };requestAnimationFrame(go)
 }
 // ── DELIBERATION CURVES ───────────────────────────────────────────────────
-// Unmodified conflict items — Bayesian ~60%→82%, biased flat ~50%, matching paper
-const DEL_ITEMS=TD.filter(t=>Math.sign(t.ls)!==Math.sign(t.lb));
+// Conflict items where stereotype and base-rate disagree.
+// We include both original items AND their mirrors (swapped ls/lb signs)
+// so that both stereotype-dominant AND base-rate-dominant reasoners
+// are penalised symmetrically on conflict trials.
+const DEL_ITEMS_RAW=TD.filter(t=>Math.sign(t.ls)!==Math.sign(t.lb));
+const DEL_ITEMS=[...DEL_ITEMS_RAW,...DEL_ITEMS_RAW.map(t=>({...t,ls:-t.ls,lb:-t.lb}))];
 function accCurve(wVal,nPts){
-  const aMin=1.5,aMax=8;
+  const aMin=0,aMax=8;
   return Array.from({length:nPts},(_,i)=>{
     const a=aMin+(aMax-aMin)*i/(nPts-1);
     let acc=0;
@@ -756,18 +804,18 @@ let _delUserStep=0,_delUserId=null;
 function drawDelCurves(showUser,userStep){
   const cv=$("del-cv");if(!cv)return;
   const ctx=cv.getContext("2d"),W=cv.width,H=cv.height;
-  const ml=44,mr=14,mt=28,mb=36,iw=W-ml-mr,ih=H-mt-mb;
+  const ml=48,mr=14,mt=42,mb=36,iw=W-ml-mr,ih=H-mt-mb;
   ctx.clearRect(0,0,W,H);ctx.fillStyle="#eceff6";ctx.fillRect(0,0,W,H);
   const nPts=60;
   const toX=i=>ml+i/(nPts-1)*iw;
-  const yMin=0.40,yMax=0.90;
+  const yMin=0.40,yMax=0.95;
   const toY=v=>mt+ih-(Math.max(yMin,Math.min(yMax,v))-yMin)/(yMax-yMin)*ih;
   // Gridlines
-  [0.5,0.6,0.7,0.8].forEach(v=>{
+  [0.5,0.6,0.7,0.8,0.9].forEach(v=>{
     ctx.strokeStyle="rgba(0,0,0,.06)";ctx.lineWidth=.8;ctx.setLineDash([3,4]);
     ctx.beginPath();ctx.moveTo(ml,toY(v));ctx.lineTo(ml+iw,toY(v));ctx.stroke();
-    ctx.fillStyle="#8090a8";ctx.font="9px DM Sans,sans-serif";ctx.textAlign="right";
-    ctx.fillText(Math.round(v*100)+"%",ml-3,toY(v)+3);
+    ctx.fillStyle="#8090a8";ctx.font="10px DM Sans,sans-serif";ctx.textAlign="right";
+    ctx.fillText(Math.round(v*100)+"%",ml-4,toY(v)+3.5);
   });
   ctx.setLineDash([]);
   function drawCurve(pts,color,dash,nDraw){
@@ -777,9 +825,10 @@ function drawDelCurves(showUser,userStep){
     ctx.beginPath();for(let i=0;i<n;i++){i===0?ctx.moveTo(toX(i),toY(pts[i])):ctx.lineTo(toX(i),toY(pts[i]))}
     ctx.stroke();ctx.setLineDash([]);
   }
-  const bayPts=accCurve(0.5,nPts),biasPts=accCurve(0.95,nPts);
+  const bayPts=accCurve(0.5,nPts),biasPts=accCurve(0.95,nPts),brPts=accCurve(0.05,nPts);
   drawCurve(bayPts,"rgba(30,136,204,.9)",[]);
   drawCurve(biasPts,"rgba(208,92,16,.9)",[6,4]);
+  drawCurve(brPts,"rgba(88,88,200,.9)",[3,3]);
   if(showUser){
     const userPts=accCurve(S.wEst,nPts);
     drawCurve(userPts,"rgba(22,152,88,.95)",[],userStep!=null?userStep:nPts);
@@ -787,31 +836,42 @@ function drawDelCurves(showUser,userStep){
   // Axes
   ctx.strokeStyle="#b0bcd0";ctx.lineWidth=1.2;ctx.setLineDash([]);
   ctx.beginPath();ctx.moveTo(ml,mt);ctx.lineTo(ml,mt+ih);ctx.lineTo(ml+iw,mt+ih);ctx.stroke();
-  ctx.fillStyle="#7a8aa0";ctx.font="10px DM Sans,sans-serif";ctx.textAlign="center";
+  ctx.fillStyle="#7a8aa0";ctx.font="11px DM Sans,sans-serif";ctx.textAlign="center";
   ctx.fillText("Decision boundary (a)",ml+iw/2,H-5);
-  ctx.save();ctx.translate(11,mt+ih/2);ctx.rotate(-Math.PI/2);ctx.fillText("% correct",0,0);ctx.restore();
-  [2,4,6,8].forEach(v=>{
-    const xp=ml+(v-1.5)/(8-1.5)*iw;
-    ctx.fillStyle="#8090a8";ctx.font="9px DM Sans,sans-serif";ctx.textAlign="center";
-    ctx.fillText(v,xp,mt+ih+11);
+  ctx.save();ctx.translate(13,mt+ih/2);ctx.rotate(-Math.PI/2);ctx.fillText("% correct",0,0);ctx.restore();
+  [0,2,4,6,8].forEach(v=>{
+    const xp=ml+(v/8)*iw;
+    ctx.fillStyle="#8090a8";ctx.font="10px DM Sans,sans-serif";ctx.textAlign="center";
+    ctx.fillText(v,xp,mt+ih+12);
   });
   // Horizontal legend row at TOP of chart area (above curves, below y-axis start)
   const legendItems=[
     {col:"rgba(30,136,204,.9)",dash:[],lbl:"Bayesian (w\u00a0=\u00a00.50)"},
-    {col:"rgba(208,92,16,.9)",dash:[6,4],lbl:"Stereotype-dominant (w\u00a0=\u00a00.95)"},
+    {col:"rgba(208,92,16,.9)",dash:[6,4],lbl:"Stereotype-dom. (w\u00a0=\u00a00.95)"},
+    {col:"rgba(88,88,200,.9)",dash:[3,3],lbl:"Base-rate dom. (w\u00a0=\u00a00.05)"},
     ...(showUser&&(userStep==null||userStep>=nPts)?[{col:"rgba(22,152,88,.95)",dash:[],lbl:"You (w\u00a0=\u00a0"+S.wEst.toFixed(2)+")"}]:[]),
   ];
-  const lyLeg=mt-6,segW=16,gap=5;
+  const lyLeg=mt-20,segW=16,gap=5,rowH=14;
   ctx.font="9px DM Sans,sans-serif";
-  const totalW=legendItems.reduce((s,{lbl})=>s+ctx.measureText(lbl).width+segW+gap+12,0)-12;
-  let lx=ml+(iw-totalW)/2;
-  legendItems.forEach(({col,dash,lbl})=>{
-    ctx.strokeStyle=col;ctx.lineWidth=1.8;ctx.setLineDash(dash);
-    ctx.beginPath();ctx.moveTo(lx,lyLeg);ctx.lineTo(lx+segW,lyLeg);ctx.stroke();ctx.setLineDash([]);
-    ctx.fillStyle="#566070";ctx.font="9px DM Sans,sans-serif";ctx.textAlign="left";
-    const w=ctx.measureText(lbl).width;
-    ctx.fillText(lbl,lx+segW+gap,lyLeg+3.5);
-    lx+=segW+gap+w+12;
+  // Split legend into rows that fit within iw
+  const rows=[[]];let rowW=0;
+  legendItems.forEach(item=>{
+    const itemW=segW+gap+ctx.measureText(item.lbl).width+12;
+    if(rows[rows.length-1].length>0&&rowW+itemW-12>iw){rows.push([]);rowW=0;}
+    rows[rows.length-1].push(item);rowW+=itemW;
+  });
+  rows.forEach((row,ri)=>{
+    const totalRW=row.reduce((s,{lbl})=>s+ctx.measureText(lbl).width+segW+gap+12,0)-12;
+    let lx=ml+(iw-totalRW)/2;
+    const ly=lyLeg+ri*rowH;
+    row.forEach(({col,dash,lbl})=>{
+      ctx.strokeStyle=col;ctx.lineWidth=1.8;ctx.setLineDash(dash);
+      ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(lx+segW,ly);ctx.stroke();ctx.setLineDash([]);
+      ctx.fillStyle="#566070";ctx.font="9px DM Sans,sans-serif";ctx.textAlign="left";
+      const w=ctx.measureText(lbl).width;
+      ctx.fillText(lbl,lx+segW+gap,ly+3.5);
+      lx+=segW+gap+w+12;
+    });
   });
 }
 function animBenBars(){
