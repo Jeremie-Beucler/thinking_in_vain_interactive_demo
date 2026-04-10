@@ -71,6 +71,7 @@ small{font-size:.78rem;color:#8090a8;line-height:1.5}
 .link-item:hover{border-color:#aab4c8;text-decoration:none}
 .link-item .ar{margin-left:auto;color:#8090a8}
 @media(max-width:420px){.choices{flex-direction:column}.cmp-grid{grid-template-columns:1fr}.bar-name{width:72px}}
+@media(max-width:500px){#hm-grid{flex-direction:column;align-items:center}#hm-user-wrap .hm-user-grid,#hm-user-wrap>div:first-child{grid-template-columns:1fr !important}}
 .vas-wrap{margin:1.4rem 0 .5rem;user-select:none}
 .vas-track{position:relative;height:10px;border-radius:5px;background:var(--s2);border:1px solid var(--bd);cursor:pointer;touch-action:none}
 .vas-fill-l{position:absolute;right:50%;top:0;height:100%;border-radius:5px 0 0 5px;background:var(--bl);width:0}
@@ -118,7 +119,8 @@ let A={ddmStep:0,ddmId:null,ddmDone:false,
        confId:null,confDone:false,confS:0,
        exStep:0,
        trStep:0,trId:null,trDone:{b:false,bay:false,par:false},
-       paths:{b:[],bay:[],par:[],b_smooth:null,bay_smooth:null,par_smooth:null},parDrift:0,parG1:"",parG2:"",parAdj:""};
+       paths:{b:[],bay:[],par:[],b_smooth:null,bay_smooth:null,par_smooth:null},parDrift:0,parG1:"",parG2:"",parAdj:"",
+       hmDone:false};
 let _smooth=[],_noisy=[];
 let confHi=[],confLo=[];
 let trDrawn={b:0,bay:0,par:0};
@@ -282,7 +284,6 @@ function rDB6(){const w=S.wEst,ts=A.trStep,dP=A.parDrift;return`<div><div class=
 <div id="cmp-wrap" style="opacity:${ts>=3?1:0};transition:opacity .6s;margin-top:1rem"><div class="cmp-grid"><div class="cmp-cell"><div class="cmp-ttl" style="color:var(--or)">Biased</div><div class="cmp-row">Avg. RT <div class="cmp-bar"><div class="cmp-bf" id="cmp-rt-b" style="width:0%"></div></div></div><div class="cmp-row">Avg. confidence <div class="cmp-bar"><div class="cmp-bf" id="cmp-cf-b" style="width:0%"></div></div></div><small style="display:block;margin-top:.4rem">On average: fast &middot; High confidence &middot; Wrong (boxer)</small></div><div class="cmp-cell"><div class="cmp-ttl" style="color:var(--bl)">Bayesian</div><div class="cmp-row">Avg. RT <div class="cmp-bar"><div class="cmp-bf" id="cmp-rt-bay" style="width:0%"></div></div></div><div class="cmp-row">Avg. confidence <div class="cmp-bar"><div class="cmp-bf" id="cmp-cf-bay" style="width:0%"></div></div></div><small style="display:block;margin-top:.4rem">On average: slow &middot; Low confidence &middot; Correct (librarian)</small></div><div class="cmp-cell"><div class="cmp-ttl" style="color:var(--pu)">You</div><div class="cmp-row">Avg. RT <div class="cmp-bar"><div class="cmp-bf" id="cmp-rt-par" style="width:0%"></div></div></div><div class="cmp-row">Avg. confidence <div class="cmp-bar"><div class="cmp-bf" id="cmp-cf-par" style="width:0%"></div></div></div><small id="cmp-par-summary" style="display:block;margin-top:.4rem"></small></div></div></div>
 <div id="tr-nav-ph">${ts>=3?navBar(S.dbp):""}</div></div>`}
 
-// DB7: Misplaced deliberation — heatmaps
 // DB7: Thinking in vain — intro
 function rDB7(){return`<div><div class="db-eye">Part 6 &mdash; Thinking in vain</div><h1>Two consequences of biased evidence accumulation</h1>
 <p style="margin-top:.5rem">The model predicts that biased reasoners are "thinking in vain" in two distinct ways.</p>
@@ -295,10 +296,10 @@ ${navBar(S.dbp)}</div>`}
 function rDB8(){const w=S.wEst;
 const cat=w>0.65?"stereotype":w>=0.35?"balanced":"baserate";
 const debriefTxt=cat==="balanced"?
-  `Your evidence landscape is fairly close to the Bayesian optimum. You tend to invest deliberative effort where it matters most: in situations where base-rate and stereotype information conflict and partially cancel out.`:
+  `Our model suggests that your evidence landscape is likely fairly close to the Bayesian optimum. You probably tend to invest deliberative effort where it matters most: in situations where base-rate and stereotype information conflict and partially cancel out.`:
   cat==="stereotype"?
-  `Your evidence landscape is stretched along the stereotype axis. You tend to feel certain whenever stereotypes are clear, even when the base-rate strongly disagrees. Conversely, when stereotypes are ambiguous, you feel uncertain even if the base-rate alone provides strong information.`:
-  `Your evidence landscape is stretched along the base-rate axis. You tend to feel certain whenever the base-rate is clear, even when the stereotype strongly disagrees. Conversely, when the base-rate is ambiguous, you feel uncertain even if the stereotype alone provides strong information.`;
+  `Our model suggests that your evidence landscape is likely stretched along the stereotype axis. You may tend to feel certain whenever stereotypes are clear, even when the base-rate strongly disagrees. Conversely, when stereotypes are ambiguous, you might feel uncertain even if the base-rate alone provides strong information.`:
+  `Our model suggests that your evidence landscape is likely stretched along the base-rate axis. You may tend to feel certain whenever the base-rate is clear, even when the stereotype strongly disagrees. Conversely, when the base-rate is ambiguous, you might feel uncertain even if the stereotype alone provides strong information.`;
 return`<div><div class="db-eye">Part 6a &mdash; Thinking in vain</div><h1>Misplaced deliberation</h1>
 <p style="margin-top:.5rem">The map below shows the <b>latent evidence strength</b> (|v|) of the median participant in our study (w&thinsp;=&thinsp;0.95) across all possible combinations of stereotype and base-rate information. Bright regions mean fast, confident responses; dark regions mean slow, uncertain ones. The top-right corner is where both sources point to boxer; the bottom-left is where both point to librarian.</p>
 <div id="hm-grid" style="display:flex;justify-content:center;gap:.8rem;margin:.9rem 0">
@@ -312,11 +313,11 @@ return`<div><div class="db-eye">Part 6a &mdash; Thinking in vain</div><h1>Mispla
 </div>
 </div>
 <div id="hm-stage1-text">
-<p style="font-size:.84rem;color:#566070;margin-top:.3rem;line-height:1.6">Notice how evidence strength varies almost entirely along the vertical axis (stereotypes). The base-rate axis (horizontal) has little influence. The dashed white line marks the Bayesian indifference line: where a Bayesian reasoner would be maximally uncertain, because the two sources perfectly cancel out.</p>
+<p style="font-size:.84rem;color:#566070;margin-top:.3rem;line-height:1.6">In the <b>Median participant</b> panel, notice how evidence strength varies almost entirely along the <b>vertical axis</b> (stereotypes), while the <b>horizontal axis</b> (base-rate) has little influence. The dashed white line marks the <b>Bayesian indifference line</b>: where a Bayesian reasoner would be maximally uncertain, because the two sources perfectly cancel out.</p>
 <div style="margin-top:.7rem"><button class="btn btn-or" id="hm-show-diff">Show difference with Bayesian &rarr;</button></div>
 </div>
 <div id="hm-stage2-text" style="display:none">
-<p style="font-size:.84rem;color:#566070;line-height:1.6;margin-top:.3rem"><span style="color:#d05c10"><b>Orange</b></span> regions: the reasoner is <b>too fast and overconfident</b> relative to the Bayesian optimum. <span style="color:#2255aa"><b>Blue</b></span> regions: <b>too slow and underconfident</b>. The biased reasoner rushes when stereotypes are strong (even when the base-rate disagrees) and hesitates when stereotypes are ambiguous (even when the base-rate is clear).</p>
+<p style="font-size:.84rem;color:#566070;line-height:1.6;margin-top:.3rem">In the <b>Difference with Bayesian</b> panel on the right, <span style="color:#d05c10"><b>red</b></span> regions indicate where the reasoner is <b>too fast and overconfident</b> relative to the Bayesian optimum. <span style="color:#2255aa"><b>Blue</b></span> regions indicate the opposite: <b>too slow and underconfident</b>. The biased reasoner rushes when stereotypes are strong (even when the base-rate disagrees) and hesitates when stereotypes are ambiguous (even when the base-rate is clear).</p>
 <div style="margin-top:.7rem"><button class="btn btn-or" id="hm-show-user">&#9654; Show my evidence map (w&thinsp;=&thinsp;${w.toFixed(2)})</button></div>
 </div>
 <div id="hm-user-wrap" style="display:none;margin-top:1rem">
@@ -326,7 +327,7 @@ return`<div><div class="db-eye">Part 6a &mdash; Thinking in vain</div><h1>Mispla
 </div>
 <div class="card" style="margin-top:.6rem;border-left:3px solid ${cat==="balanced"?"var(--bl)":cat==="stereotype"?"var(--or)":"var(--pu)"}"><p style="font-size:.84rem;margin:0">${debriefTxt}</p></div>
 </div>
-${navBar(S.dbp)}</div>`}
+<div id="hm-nav-ph">${A.hmDone?navBar(S.dbp):""}</div></div>`}
 
 function hmColor(val,maxV){
   const t=Math.min(1,Math.max(0,val/maxV));
@@ -355,7 +356,27 @@ function drawColorBar(ctx,x,y,w,h,colorFn,minV,maxV,lblL,lblR,colL,colR){
   ctx.fillStyle=colL||"#7a8aa0";ctx.textAlign="left";ctx.fillText(lblL,x,y+h+8);
   ctx.fillStyle=colR||"#7a8aa0";ctx.textAlign="right";ctx.fillText(lblR,x+w,y+h+8);
 }
-const HM_LAYOUT={ml:46,mr:6,mt:22,mb:48,n:30};
+const HM_LAYOUT={ml:46,mr:6,mt:22,mb:48,n:60};
+// Offscreen cache for the median participant heatmap (precomputed at script load)
+let _hmMedCache=null;
+function precomputeMedHeatmap(){
+  const W=320,H=320;
+  const off=document.createElement("canvas");off.width=W;off.height=H;
+  const ctx=off.getContext("2d");
+  const{ml,mr,mt,mb,n}=HM_LAYOUT,iw=W-ml-mr,ih=H-mt-mb;
+  const lsRange=Array.from({length:n},(_,i)=>-2.5+5*i/(n-1));
+  const lbRange=Array.from({length:n},(_,i)=>-3+6*i/(n-1));
+  const cw=iw/n,ch=ih/n;
+  const wVal=0.95,maxV=3.5;
+  for(let yi=0;yi<n;yi++){
+    for(let xi=0;xi<n;xi++){
+      const lb=lbRange[xi],ls=lsRange[n-1-yi];
+      ctx.fillStyle=hmColor(Math.abs(wVal*ls+(1-wVal)*lb),maxV);
+      ctx.fillRect(ml+xi*cw,mt+yi*ch,cw+.5,ch+.5);
+    }
+  }
+  _hmMedCache=off;
+}
 function hmAxes(ctx,W,H,ml,mr,mt,mb,iw,ih){
   // X axis
   ctx.fillStyle="#566070";ctx.font="9px DM Sans,sans-serif";ctx.textAlign="center";
@@ -379,15 +400,20 @@ function drawHeatmap(cvId,wVal,maxV){
   const cv=$(cvId);if(!cv)return;
   const ctx=cv.getContext("2d"),W=cv.width,H=cv.height;
   const{ml,mr,mt,mb,n}=HM_LAYOUT,iw=W-ml-mr,ih=H-mt-mb;
-  const lsRange=Array.from({length:n},(_,i)=>-2.5+5*i/(n-1));
-  const lbRange=Array.from({length:n},(_,i)=>-3+6*i/(n-1));
-  const cw=iw/n,ch=ih/n;
   ctx.clearRect(0,0,W,H);
-  for(let yi=0;yi<n;yi++){
-    for(let xi=0;xi<n;xi++){
-      const lb=lbRange[xi],ls=lsRange[n-1-yi];
-      ctx.fillStyle=hmColor(Math.abs(wVal*ls+(1-wVal)*lb),maxV);
-      ctx.fillRect(ml+xi*cw,mt+yi*ch,cw+.5,ch+.5);
+  // Fast path: use precomputed cache for the median heatmap
+  if(wVal===0.95&&maxV===3.5&&_hmMedCache&&W===_hmMedCache.width&&H===_hmMedCache.height){
+    ctx.drawImage(_hmMedCache,0,0);
+  } else {
+    const lsRange=Array.from({length:n},(_,i)=>-2.5+5*i/(n-1));
+    const lbRange=Array.from({length:n},(_,i)=>-3+6*i/(n-1));
+    const cw=iw/n,ch=ih/n;
+    for(let yi=0;yi<n;yi++){
+      for(let xi=0;xi<n;xi++){
+        const lb=lbRange[xi],ls=lsRange[n-1-yi];
+        ctx.fillStyle=hmColor(Math.abs(wVal*ls+(1-wVal)*lb),maxV);
+        ctx.fillRect(ml+xi*cw,mt+yi*ch,cw+.5,ch+.5);
+      }
     }
   }
   // Color bar
@@ -527,11 +553,13 @@ function bind(){
   $("hm-show-user")?.addEventListener("click",()=>{
     const wrap=$("hm-user-wrap");if(wrap){wrap.style.display="block";wrap.style.opacity="0";wrap.style.transition="opacity .5s";setTimeout(()=>{wrap.style.opacity="1";drawUserHeatmaps()},20)}
     $("hm-show-user").disabled=true;$("hm-show-user").classList.add("btn-done");
+    A.hmDone=true;
+    const ph=$("hm-nav-ph");if(ph){ph.innerHTML=navBar(S.dbp);bind()}
   });
 }
 function fullReset(){
   S={scr:"welcome",trials:[],idx:0,resp:[],wEst:0.5,wCI:{lo:0.05,hi:0.95},dbp:0,bStep:0};
-  A={ddmStep:0,ddmId:null,ddmDone:false,confId:null,confDone:false,confS:0,exStep:0,trStep:0,trId:null,trDone:{b:false,bay:false,par:false},paths:{b:[],bay:[],par:[],b_smooth:null,bay_smooth:null,par_smooth:null},parDrift:0,parG1:"",parG2:"",parAdj:""};
+  A={ddmStep:0,ddmId:null,ddmDone:false,confId:null,confDone:false,confS:0,exStep:0,trStep:0,trId:null,trDone:{b:false,bay:false,par:false},paths:{b:[],bay:[],par:[],b_smooth:null,bay_smooth:null,par_smooth:null},parDrift:0,parG1:"",parG2:"",parAdj:"",hmDone:false};
   _smooth=[];_noisy=[];confHi=[];confLo=[];trDrawn={b:0,bay:0,par:0};render()
 }
 function advDB(){
@@ -539,7 +567,7 @@ function advDB(){
   if(A.confId){cancelAnimationFrame(A.confId);A.confId=null}
   if(A.trId){cancelAnimationFrame(A.trId);A.trId=null}
   S.dbp++;
-  A.exStep=0;A.trStep=0;A.ddmStep=0;A.ddmDone=false;A.confId=null;A.confDone=false;A.confS=0;
+  A.exStep=0;A.trStep=0;A.ddmStep=0;A.ddmDone=false;A.confId=null;A.confDone=false;A.confS=0;A.hmDone=false;
   _smooth=[];_noisy=[];confHi=[];confLo=[];trDrawn={b:0,bay:0,par:0};A.paths={b:[],bay:[],par:[],b_smooth:null,bay_smooth:null,par_smooth:null};
   render()
 }
@@ -1056,5 +1084,6 @@ function animBenBars(){
     requestAnimationFrame(go);
   });
 }
+precomputeMedHeatmap();
 render();
 </script></body></html>
