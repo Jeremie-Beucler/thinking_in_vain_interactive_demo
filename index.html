@@ -189,7 +189,7 @@ function mkFixed(drift,steps,seed,dt,sg){dt=dt||0.012;sg=sg||0.13;const rng=sRNG
 
 function render(){$("app").innerHTML=({welcome:rWelcome,instructions:rInst,trial:rTrial,debrief:rDB}[S.scr]||rWelcome)();bind();if(S.scr==="debrief")setTimeout(afterRender,80)}
 const navBar=n=>`<div class="page-nav"><span class="page-step">${n+1} / 11</span><button class="btn btn-pri" id="btn-next">Continue &rarr;</button></div>`;
-function rWelcome(){return`<div style="padding-top:1.5rem"><h1 style="font-size:2rem;margin-bottom:.35rem">Are you thinking in vain?</h1><p style="font-size:1.05rem;color:var(--dm);margin-bottom:2rem">An interactive demonstration</p><div class="card"><p style="margin-top:.25rem">You will complete <b>8 short reasoning problems</b>. Your responses are used to estimate your reasoning profile on the fly. Afterward, we walk through the normative computation, a model of how you combined the available information, and what this tells us about deliberation and bias.</p><p>This demonstration illustrates the main findings of our recent work: <b>Thinking in Vain: A Mechanistic Account of Biased Evidence Accumulation in Reasoning</b> (Beucler, Purcell, Charles, De Neys &amp; Desender).</p><p style="font-style:italic;color:#8090a8;margin-top:.3rem">Built with the help of Claude.</p></div><div class="btn-row"><button class="btn btn-pri" id="btn-start">Start &rarr;</button></div></div>`}
+function rWelcome(){return`<div style="padding-top:1.5rem"><h1 style="font-size:2rem;margin-bottom:.35rem">Are you thinking in vain?</h1><p style="font-size:1.05rem;color:var(--dm);margin-bottom:2rem">An interactive demonstration</p><div class="card"><p style="margin-top:.25rem">You will complete <b>8 short reasoning problems</b>. Your responses are used to get a rough estimate of your reasoning profile. Afterward, we walk through the normative computation, a model of how you may have combined the available information, and what this tells us about deliberation and bias.</p><p>This demonstration illustrates the main findings of our recent work: <b>Thinking in Vain: A Mechanistic Account of Biased Evidence Accumulation in Reasoning</b> (Beucler, Purcell, Charles, De Neys &amp; Desender).</p><p style="font-style:italic;color:#8090a8;margin-top:.3rem">Built with the help of Claude.</p></div><div class="btn-row"><button class="btn btn-pri" id="btn-start">Start &rarr;</button></div></div>`}
 function rInst(){return`<div><div class="db-eye">Instructions</div><h1>How it works</h1><div class="card" style="margin-top:.75rem"><p>Each problem describes a fictional study with two groups. You'll see how many people are in each group and a one-word description of a randomly selected individual.</p><p><b>Your task:</b> drag the slider toward the group you think the individual most likely belongs to. Drag further if you're confident, stay near center if you're unsure.</p><div class="card-sm" style="text-align:center;opacity:.85"><div style="font-size:.72rem;color:#8090a8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">Example (non-interactive preview)</div><div class="t-line">This study contains lawyers and nurses.</div><div class="t-line">Person 'A' is kind.</div><div class="t-line">There are 995 lawyers and 5 nurses.</div><div style="margin-top:.9rem"><div style="display:flex;justify-content:space-between;font-size:.82rem;font-weight:500;color:var(--tx);margin-bottom:.35rem"><span>a lawyer</span><span>a nurse</span></div><div style="position:relative;height:10px;border-radius:5px;background:var(--s2);border:1px solid var(--bd)"><div style="position:absolute;top:50%;left:72%;width:22px;height:22px;border-radius:50%;background:#fff;border:2.5px solid var(--tx);transform:translate(-50%,-50%)"></div></div><div style="display:flex;justify-content:space-between;font-size:.68rem;color:#8090a8;margin-top:.4rem;font-style:italic"><span>certain</span><span>uncertain</span><span>certain</span></div></div></div></div><div class="btn-row"><button class="btn btn-pri" id="btn-inst">Begin &rarr;</button></div></div>`}
 function rTrial(){const t=S.trials[S.idx],flip=t.flip,lg=flip?t.g2:t.g1,rg=flip?t.g1:t.g2,L=String.fromCharCode(65+S.idx);
 return`<div><div class="prog"><div class="prog-bar"><div class="prog-fill" style="width:${Math.round(S.idx/8*100)}%"></div></div><div class="prog-lbl">Problem ${S.idx+1} of 8</div></div><div class="trial-card"><div class="t-line">This study contains ${t.g1}s and ${t.g2}s.</div><div class="t-line">Person '${L}' is ${t.adj}.</div><div class="t-line">There are ${t.n1.toLocaleString()} ${t.g1}s and ${t.n2.toLocaleString()} ${t.g2}s.</div><div class="t-q" style="margin-bottom:.5rem">Which group does Person '${L}' most likely belong to?</div>
@@ -260,7 +260,7 @@ return`<div><div class="db-eye">Part 2</div><h1>How you weighted the evidence</h
   </div>
 </div>
 <div class="card"><p>${desc}</p><p>In our full study (N = 151), the majority of participants placed very high weight on stereotype information (median w &asymp; 0.95), often near-ignoring the base-rate.</p></div>
-<div class="card" style="border-left:3px solid var(--bd)"><p style="font-size:.84rem;color:#566070;margin:0"><b style="color:var(--tx)">Note:</b> The 80% confidence interval reflects the estimation uncertainty from using only 8 reasoning problems. In the paper, w is fitted jointly to ~240 trials of choices, response times, and confidence ratings, yielding a much tighter estimate. <i>Sorry if you were misclassified!</i></p><button class="exp-btn" id="exp-btn" style="margin-top:.55rem">How was w estimated?</button><div class="exp-body" id="exp-body"><p style="font-size:.82rem;color:#566070;margin-bottom:.5rem">Stereotype evidence per trial: log(<span class="frac" style="font-size:.78rem;font-weight:400"><span class="frac-n">typicality<sub>g1</sub></span><span class="frac-d">typicality<sub>g2</sub></span></span>) from GPT-4 ratings. Base-rate evidence: log(<span class="frac" style="font-size:.78rem;font-weight:400"><span class="frac-n">n<sub>g1</sub></span><span class="frac-d">n<sub>g2</sub></span></span>). We estimate w by maximizing the joint log-likelihood of choices (logistic model) and slider positions (Gaussian confidence model) with a weak Beta(3,3) prior. The 80% CI is the highest-density interval of the resulting posterior.</p></div></div>
+<div class="card" style="border-left:3px solid var(--bd)"><p style="font-size:.84rem;color:#566070;margin:0"><b style="color:var(--tx)">Keep in mind:</b> This is an <b>illustrative approximation</b>, not a formal model fit. With only 8 trials, the estimate of w is rough — in the paper, w is fitted jointly to ~240 trials of choices, response times, and confidence ratings, yielding much more precise and reliable estimates. No DDM is fitted to your data here: the simulations on the next pages use your estimated w combined with fixed, standard DDM parameters to illustrate the model's predictions. Think of it as a sketch of your reasoning profile, not a diagnosis.</p><button class="exp-btn" id="exp-btn" style="margin-top:.55rem">How was w estimated?</button><div class="exp-body" id="exp-body"><p style="font-size:.82rem;color:#566070;margin-bottom:.5rem">Stereotype evidence per trial: log(<span class="frac" style="font-size:.78rem;font-weight:400"><span class="frac-n">typicality<sub>g1</sub></span><span class="frac-d">typicality<sub>g2</sub></span></span>) from GPT-4 ratings. Base-rate evidence: log(<span class="frac" style="font-size:.78rem;font-weight:400"><span class="frac-n">n<sub>g1</sub></span><span class="frac-d">n<sub>g2</sub></span></span>). We estimate w by maximizing the joint log-likelihood of choices (logistic model) and slider positions (Gaussian confidence model) with a weak Beta(3,3) prior. The 80% confidence interval is the highest-density interval of the resulting posterior.</p></div></div>
 ${navBar(S.dbp)}</div>`}
 
 // DB3: DDM
@@ -280,7 +280,7 @@ function rDB5(){const s=A.exStep,dB=+(0.95*2.104+0.05*(-2.944)).toFixed(2),dBay=
 ${s>=3?navBar(S.dbp):""}</div>`}
 
 // DB6: Trajectories
-function rDB6(){const w=S.wEst,ts=A.trStep,dP=A.parDrift;return`<div><div class="db-eye">Part 5</div><h1>What does the model predict?</h1><p style="margin-top:.5rem">Applying the model to a conflict trial (50 boxers, 950 librarians, Person A is muscular). Each evidence-weighting strategy yields a different drift rate. Solid lines show the noiseless drift; faded lines are individual simulated trials.</p><div class="cv-wrap"><canvas id="tr-cv" width="600" height="270" style="width:100%;display:block"></canvas><div class="cv-cap" id="tr-cap">Click a button below to add each trajectory.</div></div><div class="btn-row"><button class="btn" id="tr-b">1. Biased reasoner (w = 0.95, v = +1.85)</button><button class="btn" id="tr-bay" disabled>2. Bayesian reasoner (w = 0.50, v = &minus;0.42)</button><button class="btn" id="tr-par" disabled>3. Your trajectory (w = ${w.toFixed(2)})</button></div>
+function rDB6(){const w=S.wEst,ts=A.trStep,dP=A.parDrift;return`<div><div class="db-eye">Part 5</div><h1>What does the model predict?</h1><p style="margin-top:.5rem">Applying the model to a conflict trial (50 boxers, 950 librarians, Person A is muscular). Each evidence-weighting strategy yields a different drift rate. Solid lines show the noiseless drift; faded lines are individual simulated trials.</p><p style="font-size:.84rem;color:#566070;margin-top:0">The drift rate is computed directly from w and the trial's evidence values. All other DDM parameters (boundary separation, noise, non-decision time) are set to standard values and identical across reasoners, such that only w differs.</p><div class="cv-wrap"><canvas id="tr-cv" width="600" height="270" style="width:100%;display:block"></canvas><div class="cv-cap" id="tr-cap">Click a button below to add each trajectory.</div></div><div class="btn-row"><button class="btn" id="tr-b">1. Biased reasoner (w = 0.95, v = +1.85)</button><button class="btn" id="tr-bay" disabled>2. Bayesian reasoner (w = 0.50, v = &minus;0.42)</button><button class="btn" id="tr-par" disabled>3. Simulated with your w (${w.toFixed(2)})</button></div>
 <div id="cmp-wrap" style="opacity:${ts>=3?1:0};transition:opacity .6s;margin-top:1rem"><div class="cmp-grid"><div class="cmp-cell"><div class="cmp-ttl" style="color:var(--or)">Biased</div><div class="cmp-row">Avg. RT <div class="cmp-bar"><div class="cmp-bf" id="cmp-rt-b" style="width:0%"></div></div></div><div class="cmp-row">Avg. confidence <div class="cmp-bar"><div class="cmp-bf" id="cmp-cf-b" style="width:0%"></div></div></div><small style="display:block;margin-top:.4rem">On average: fast &middot; High confidence &middot; Wrong (boxer)</small></div><div class="cmp-cell"><div class="cmp-ttl" style="color:var(--bl)">Bayesian</div><div class="cmp-row">Avg. RT <div class="cmp-bar"><div class="cmp-bf" id="cmp-rt-bay" style="width:0%"></div></div></div><div class="cmp-row">Avg. confidence <div class="cmp-bar"><div class="cmp-bf" id="cmp-cf-bay" style="width:0%"></div></div></div><small style="display:block;margin-top:.4rem">On average: slow &middot; Low confidence &middot; Correct (librarian)</small></div><div class="cmp-cell"><div class="cmp-ttl" style="color:var(--pu)">You</div><div class="cmp-row">Avg. RT <div class="cmp-bar"><div class="cmp-bf" id="cmp-rt-par" style="width:0%"></div></div></div><div class="cmp-row">Avg. confidence <div class="cmp-bar"><div class="cmp-bf" id="cmp-cf-par" style="width:0%"></div></div></div><small id="cmp-par-summary" style="display:block;margin-top:.4rem"></small></div></div></div>
 <div id="tr-nav-ph">${ts>=3?navBar(S.dbp):""}</div></div>`}
 
@@ -844,21 +844,38 @@ function pregenTR(){
   const w=S.wEst;
   const refItem=TD[1]; // boxer/librarian, muscular, ls=2.104, lb=-2.944
   const bnd=1.2,flat=25;
+  A.parDrift=+(w*refItem.ls+(1-w)*refItem.lb).toFixed(2);
+  A.parG1=refItem.g1;A.parG2=refItem.g2;A.parAdj=refItem.adj;
   if(!A.paths.bay.length){
-    A.paths.bay_smooth=mkSmooth(-0.42,-bnd,flat,0.009);
-    A.paths.bay=genTrimmedPaths(-0.42,bnd,flat);
-  }
-  const maxLen=Math.max(...A.paths.bay.map(p=>p.length))*2;
-  if(!A.paths.b.length){
-    A.paths.b_smooth=mkSmooth(1.85,bnd,flat,0.009);
-    A.paths.b=genTrimmedPaths(1.85,bnd,flat);
-  }
-  if(!A.paths.par.length){
-    A.parDrift=+(w*refItem.ls+(1-w)*refItem.lb).toFixed(2);
-    A.parG1=refItem.g1;A.parG2=refItem.g2;A.parAdj=refItem.adj;
+    const drifts={b:1.85,bay:-0.42,par:A.parDrift};
+    // Generate with same seeds for all three reasoners
+    // First find seeds that produce reasonable-length paths for ALL reasoners
+    const maxRaw=500;
+    const seeds=[];
+    for(let seed=40;seeds.length<TR_N_NOISY&&seed<maxRaw;seed++){
+      const pb=mkFlat(drifts.b,bnd,seed,flat);
+      const pbay=mkFlat(drifts.bay,bnd,seed,flat);
+      const ppar=mkFlat(drifts.par,bnd,seed,flat);
+      // Keep only if all three cross boundary in reasonable time
+      const maxLen=600;
+      if(pb.length<=maxLen&&pbay.length<=maxLen&&ppar.length<=maxLen)seeds.push(seed);
+    }
+    // If not enough shared seeds, relax: use any seed where at least Bayesian crosses
+    if(seeds.length<TR_N_NOISY){
+      for(let seed=40;seeds.length<TR_N_NOISY&&seed<maxRaw;seed++){
+        if(!seeds.includes(seed)){
+          const pbay=mkFlat(drifts.bay,bnd,seed,flat);
+          if(pbay.length<=800)seeds.push(seed);
+        }
+      }
+    }
+    A.paths.b=seeds.map(s=>mkFlat(drifts.b,bnd,s,flat));
+    A.paths.bay=seeds.map(s=>mkFlat(drifts.bay,bnd,s,flat));
+    A.paths.par=seeds.map(s=>mkFlat(drifts.par,bnd,s,flat));
+    A.paths.b_smooth=mkSmooth(drifts.b,bnd,flat,0.009);
+    A.paths.bay_smooth=mkSmooth(drifts.bay,-bnd,flat,0.009);
     const targetBnd=A.parDrift>=0?bnd:-bnd;
     A.paths.par_smooth=mkSmooth(A.parDrift,targetBnd,flat,0.009);
-    A.paths.par=genTrimmedPaths(A.parDrift,bnd,flat);
   }
 }
 function drawTRBase(cv){
@@ -884,11 +901,14 @@ function trPlay(which){
   const cv=$("tr-cv");if(!cv||A.trId)return;
   const ctx=cv.getContext("2d"),{_ml:ml,_iw:iw,_ih:ih,_mt:mt,_bnd:bnd}=cv;
   const toY=v=>mt+ih/2-v*(ih/2)/bnd;
-  // Compute maxL across all generated paths
+  // Base time axis on smooth (deterministic) paths for visual consistency
   let allLens=[];
   ["b","bay","par"].forEach(k=>{
-    if(A.paths[k]&&A.paths[k].length)A.paths[k].forEach(p=>allLens.push(p.length));
     if(A.paths[k+"_smooth"])allLens.push(A.paths[k+"_smooth"].length);
+  });
+  // Also include noisy paths but cap contribution
+  ["b","bay","par"].forEach(k=>{
+    if(A.paths[k]&&A.paths[k].length)A.paths[k].forEach(p=>allLens.push(p.length));
   });
   const maxL=Math.max(...allLens,300);
   const toX=s=>ml+s/maxL*iw;
@@ -930,7 +950,7 @@ function trPlay(which){
       const caps={
         b:"<b>Biased reasoner (w = 0.95):</b> Strong positive drift (v = +1.85) pulls toward the Boxer boundary quickly. On average: fast, high confidence \u2014 but the wrong answer given 950 librarians.",
         bay:"<b>Bayesian reasoner (w = 0.50):</b> Negative drift (v = \u22120.42) \u2014 base-rate dominates. On average: slower, lower confidence \u2014 the correct answer (librarian).",
-        par:"<b>Your trajectory (w = "+S.wEst.toFixed(2)+"):</b> "+A.parG1+" vs "+A.parG2+", '"+A.parAdj+"'. Drift v = "+(A.parDrift>0?"+":"")+A.parDrift+"."
+        par:"<b>Simulated from your estimated w ("+S.wEst.toFixed(2)+"):</b> "+A.parG1+" vs "+A.parG2+", '"+A.parAdj+"'. Drift v = "+(A.parDrift>0?"+":"")+A.parDrift+"."
       };
       const cap=$("tr-cap");if(cap)cap.innerHTML=caps[which];
       const bb=$("tr-b"),bayb=$("tr-bay"),parb=$("tr-par");
